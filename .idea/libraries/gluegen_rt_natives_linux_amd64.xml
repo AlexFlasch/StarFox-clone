@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="gluegen-rt-natives-linux-amd64">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/gluegen-rt-natives-linux-amd64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/gluegen-rt-natives-linux-i586.jar!/" />
+      <root url="jar://$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/gluegen-rt-natives-macosx-universal.jar!/" />
+      <root url="jar://$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/gluegen-rt-natives-windows-amd64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/gluegen-rt-natives-windows-i586.jar!/" />
+      <root url="jar://$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/gluegen-rt.jar!/" />
+      <root url="jar://$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/jogl-all-natives-linux-amd64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/jogl-all-natives-linux-i586.jar!/" />
+      <root url="jar://$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/jogl-all-natives-macosx-universal.jar!/" />
+      <root url="jar://$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/jogl-all-natives-windows-amd64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/jogl-all-natives-windows-i586.jar!/" />
+      <root url="jar://$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/jogl-all.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
