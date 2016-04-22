@@ -3,9 +3,20 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
+/**
+ * @author wjur on Github
+ *
+ * Modified by Alex Flasch to use JOGL and to allow texture mapping
+ */
+
 public class MtlLoader {
 
     public ArrayList Materials = new ArrayList();
+    public boolean hasTextureMap;
+
+    public String kaTexturePath;
+    public String kdTexturePath;
+    public String ksTexturePath;
 
     public class mtl {
         public String name;
@@ -14,6 +25,9 @@ public class MtlLoader {
         public float[] Ka = new float[3];
         public float[] Kd = new float[3];
         public float[] Ks = new float[3];
+        public boolean hasKaMap;
+        public boolean hasKdMap;
+        public boolean hasKsMap;
     }
 
     public MtlLoader(BufferedReader ref, String pathtoimages) {
@@ -129,6 +143,24 @@ public class MtlLoader {
                     if (newline.charAt(0) == 'd') {
                         String[] coordstext = newline.split("\\s+");
                         matset.d = Float.valueOf(coordstext[1]).floatValue();
+                    }
+                    if (newline.startsWith("map_Ka")) {
+                        matset.hasKaMap = true;
+                        hasTextureMap = true;
+
+                        kaTexturePath = newline.substring(7);
+                    }
+                    if (newline.startsWith("map_Kd")) {
+                        matset.hasKdMap = true;
+                        hasTextureMap = true;
+
+                        kdTexturePath = newline.substring(7);
+                    }
+                    if (newline.startsWith("map_Ks")) {
+                        matset.hasKsMap = true;
+                        hasTextureMap = true;
+
+                        ksTexturePath = newline.substring(7);
                     }
                 }
             }

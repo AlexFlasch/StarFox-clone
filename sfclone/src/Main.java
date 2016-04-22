@@ -3,6 +3,7 @@ import com.jogamp.opengl.awt.GLCanvas;
 import com.jogamp.opengl.awt.GLJPanel;
 import com.jogamp.opengl.glu.GLU;
 import com.jogamp.opengl.util.FPSAnimator;
+import com.jogamp.opengl.util.gl2.GLUT;
 import jogamp.opengl.glu.GLUquadricImpl;
 
 import javax.swing.*;
@@ -15,12 +16,15 @@ import java.awt.event.MouseListener;
 public class Main extends JFrame implements GLEventListener {
 
     static GLU glu = new GLU();
+    static GLUT glut = new GLUT();
     static GLCapabilities capabilities;
     static FPSAnimator fps;
 
     static int windowWidth;
     static int windowHeight;
     static double aspectRatio;
+
+    static int translateAmount = -2;
 
     GLModel arwing;
 
@@ -36,33 +40,33 @@ public class Main extends JFrame implements GLEventListener {
 
         Controls controls = new Controls();
 
-        capabilities = new GLCapabilities(GLProfile.getGL4ES3());
+        GLJPanel canvas = new GLJPanel();
+
+        GLCapabilities capabilities = new GLCapabilities(GLProfile.getGL2GL3());
         capabilities.setDoubleBuffered(true);
         capabilities.setHardwareAccelerated(true);
 
-        GLJPanel canvas = new GLJPanel();
         canvas.addGLEventListener(new Main());
 
         fps = new FPSAnimator(canvas, 60);
 
-        JFrame frame = new JFrame("SpaceMammal 128");
+        JFrame panel = new JFrame();
+        panel.setSize(windowWidth, windowHeight);
+        panel.setResizable(false);
+        panel.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        panel.add(canvas);
+        panel.setVisible(true);
+        panel.requestFocusInWindow();
 
-        frame.addKeyListener(controls);
-        frame.addMouseListener(controls);
-
-        frame.setSize(windowWidth, windowHeight);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.getContentPane().add(canvas);
-        frame.setVisible(true);
-        frame.requestFocus();
+        panel.addKeyListener(controls);
     }
 
     @Override
     public void init(GLAutoDrawable glAutoDrawable) {
-        GL4 gl4 = glAutoDrawable.getGL().getGL4();
         GL2 gl = glAutoDrawable.getGL().getGL2();
 
         arwing = ObjLoader.LoadModel("sfclone/res/Arwing/arwing.obj", "sfclone/res/Arwing/arwing.mtl", gl);
+        System.out.println("Arwing dimensions (x,y,z): "+ arwing.getXWidth() + " " + arwing.getYHeight() + " " + arwing.getZDepth());
 
         gl.glEnable(GL2.GL_LIGHTING);
         gl.glEnable(GL2.GL_LIGHT0);
@@ -75,13 +79,19 @@ public class Main extends JFrame implements GLEventListener {
         gl.glOrtho(-100, 100, -100, 100, -100, 100);
         gl.glMatrixMode(GL2.GL_MODELVIEW);
 
-        gl.glClear(GL4.GL_CLEAR_BUFFER | GL4.GL_DEPTH_BUFFER_BIT);
+        glu.gluPerspective(0.1f, aspectRatio, 0.1f, 50f); // fov aspect zNear zFar
+        gl.glHint(GL2.GL_PERSPECTIVE_CORRECTION_HINT, GL2.GL_NICEST);
+        glu.gluLookAt(0f, 0f, -20f, // eyePos
+                0f, 0f, 0f,       // lookAtPos
+                0f, 1f, 0f);      // eyeUpPos
 
-        float gAmb[] = {0.2f, 0.2f, 0.2f, 1.0f};
+        gl.glClear(GL2.GL_CLEAR_BUFFER | GL2.GL_DEPTH_BUFFER_BIT);
+
+        float gAmb[] = {1.0f, 1.0f, 1.0f, 1.0f};
         float amb[] = {0.7f, 0.7f, 0.7f, 1.0f};
         float diff[] = {1.0f, 1.0f, 1.0f, 1.0f};
         float spec[] = {1.0f, 1.0f, 1.0f, 1.0f};
-        float pos[] = {0.0f, 5.0f, 0.0f, 1.0f};
+        float pos[] = {0.0f, 0.75f, -2.0f, 1.0f};
 
         gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_AMBIENT, amb, 0);
         gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, diff, 0);
@@ -104,26 +114,19 @@ public class Main extends JFrame implements GLEventListener {
         GL4 gl4 = glAutoDrawable.getGL().getGL4();
         GL2 gl = glAutoDrawable.getGL().getGL2();
 
-        gl.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         gl.glClear(GL2.GL_DEPTH_BUFFER_BIT | GL2.GL_COLOR_BUFFER_BIT);
 
-        gl.glMatrixMode(GL2.GL_PROJECTION);
-        gl.glLoadIdentity();
-        gl.glOrtho(-100, 100, -100, 100, -100, 100); // everything is within a 200x200x200 cube
-        glu.gluPerspective(30, aspectRatio, 1, 50);
+        gl.glColor3f(1.0f, 1.0f, 1.0f);
 
-        gl.glMatrixMode(GL2.GL_MODELVIEW);
-        gl.glLoadIdentity();
-        glu.gluLookAt(0, 0, -5, 0, 0, 0, 0, 0, 0); // eyePos, lookAtPos, eyeUp
+        //glut.glutSolidSphere(1, 20, 20);
 
-        glu.gluSphere(glu.gluNewQuadric(), 10, 25, 25);
+        gl.glRotatef(0.25f, 0.0f, 1.0f, 0.0f);
 
         gl.glPushMatrix();
+        gl.glTranslated(0, 0, translateAmount);
+        gl.glRotated(1.0, 0, 1, 0);
+        gl.glScaled(0.5, 0.5, 0.5);
         arwing.opengldraw(gl);
-
-        // gl.glRotated(1.0, 0, 1, 0);
-        gl.glTranslated(0, 0, 15);
-        gl.glScaled(0.25, 0.25, 0.25);
         gl.glPopMatrix();
 
         gl.glFlush();
@@ -132,5 +135,15 @@ public class Main extends JFrame implements GLEventListener {
     @Override
     public void reshape(GLAutoDrawable glAutoDrawable, int i, int i1, int i2, int i3) {
 
+    }
+
+    public static void moveArwingAway() {
+        translateAmount--;
+        System.out.println("translateAmount: " + translateAmount);
+    }
+
+    public static void moveArwingTowards() {
+        translateAmount++;
+        System.out.println("translateAmount: " + translateAmount);
     }
 }

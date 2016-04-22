@@ -19,7 +19,14 @@ public class Controls implements KeyListener, MouseListener {
 
     @Override
     public void keyReleased(KeyEvent e) {
-
+        switch(e.getKeyCode()) {
+            case KeyEvent.VK_UP:
+                Main.moveArwingAway();
+                break;
+            case KeyEvent.VK_DOWN:
+                Main.moveArwingTowards();
+                break;
+        }
     }
 
     @Override

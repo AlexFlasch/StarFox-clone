@@ -1,8 +1,34 @@
+import com.jogamp.common.nio.Buffers;
+import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
+import com.jogamp.opengl.GLProfile;
+import com.jogamp.opengl.glu.GLU;
+import com.jogamp.opengl.util.texture.TextureIO;
+import com.jogamp.opengl.util.texture.awt.AWTTextureIO;
+import com.sun.prism.impl.BufferUtil;
+import jogamp.opengl.glu.mipmap.Image;
 
+import javax.imageio.ImageIO;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferInt;
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.StringTokenizer;
+
+/**
+ * @author wjur on Github
+ *
+ * Modified by Alex Flasch to use JOGL
+ */
 
 public class GLModel{
 
@@ -24,8 +50,11 @@ public class GLModel{
     public float nearpoint;
     private String mtl_path;
 
+    GLU glu;
+
     //THIS CLASS LOADS THE MODELS
     public GLModel(BufferedReader ref, boolean centerit, String path, GL2 gl){
+        glu = new GLU();
 
         mtl_path=path;
         vertexsets = new ArrayList();
@@ -45,7 +74,13 @@ public class GLModel{
         loadobject(ref);
         if(centerit)
             centerit();
-        opengldrawtolist(gl);
+        try{
+            opengldrawtolist(gl);
+        }
+        catch(FileNotFoundException e) {
+            System.out.println("File not found.");
+            e.getMessage();
+        }
         numpolys = faces.size();
         cleanup();
     }
@@ -102,36 +137,34 @@ public class GLModel{
                             farpoint = coords[2];
                         vertexsets.add(coords);
                     }
-                    else
+                    else {
 
                         //LOADS VERTEX TEXTURE COORDINATES
-                        if(newline.startsWith("vt")){
+                        if (newline.startsWith("vt")) {
                             float coords[] = new float[4];
                             String coordstext[] = new String[4];
                             newline = newline.substring(3, newline.length());
                             StringTokenizer st = new StringTokenizer(newline, " ");
-                            for(int i = 0; st.hasMoreTokens(); i++)
+                            for (int i = 0; st.hasMoreTokens(); i++)
                                 coords[i] = Float.parseFloat(st.nextToken());
 
                             vertexsetstexs.add(coords);
-                        }
-                        else
+                        } else {
 
                             //LOADS VERTEX NORMALS COORDINATES
-                            if(newline.startsWith("vn")){
+                            if (newline.startsWith("vn")) {
                                 float coords[] = new float[4];
                                 String coordstext[] = new String[4];
                                 newline = newline.substring(3, newline.length());
                                 StringTokenizer st = new StringTokenizer(newline, " ");
-                                for(int i = 0; st.hasMoreTokens(); i++)
+                                for (int i = 0; st.hasMoreTokens(); i++)
                                     coords[i] = Float.parseFloat(st.nextToken());
 
                                 vertexsetsnorms.add(coords);
-                            }
-                            else
+                            } else {
 
                                 //LOADS FACES COORDINATES
-                                if(newline.startsWith("f ")){
+                                if (newline.startsWith("f ")) {
                                     facecounter++;
                                     newline = newline.substring(2, newline.length());
                                     StringTokenizer st = new StringTokenizer(newline, " ");
@@ -139,12 +172,12 @@ public class GLModel{
                                     int v[] = new int[count];
                                     int vt[] = new int[count];
                                     int vn[] = new int[count];
-                                    for(int i = 0; i < count; i++){
+                                    for (int i = 0; i < count; i++) {
                                         char chars[] = st.nextToken().toCharArray();
                                         StringBuffer sb = new StringBuffer();
                                         char lc = 'x';
-                                        for(int k = 0; k < chars.length; k++){
-                                            if(chars[k] == '/' && lc == '/')
+                                        for (int k = 0; k < chars.length; k++) {
+                                            if (chars[k] == '/' && lc == '/')
                                                 sb.append('0');
                                             lc = chars[k];
                                             sb.append(lc);
@@ -154,11 +187,11 @@ public class GLModel{
                                                 (sb.toString(), "/");
                                         int num = st2.countTokens();
                                         v[i] = Integer.parseInt(st2.nextToken());
-                                        if(num > 1)
+                                        if (num > 1)
                                             vt[i] = Integer.parseInt(st2.nextToken());
                                         else
                                             vt[i] = 0;
-                                        if(num > 2)
+                                        if (num > 2)
                                             vn[i] = Integer.parseInt(st2.nextToken());
                                         else
                                             vn[i] = 0;
@@ -167,28 +200,31 @@ public class GLModel{
                                     faces.add(v);
                                     facestexs.add(vt);
                                     facesnorms.add(vn);
-                                }
-                                else
+                                } else {
 
                                     //LOADS MATERIALS
-                                    if (newline.charAt(0) == 'm' && newline.charAt(1) == 't' && newline.charAt(2) == 'l' && newline.charAt(3) == 'l' && newline.charAt(4) == 'i' && newline.charAt(5) == 'b') {
+                                    if (newline.startsWith("mtllib")) {
                                         String[] coordstext = new String[3];
                                         coordstext = newline.split("\\s+");
-                                        if(mtl_path!=null)
+                                        if (mtl_path != null)
                                             loadmaterials();
-                                    }
-                                    else
+                                    } else {
 
-                                        //USES MATELIALS
-                                        if (newline.charAt(0) == 'u' && newline.charAt(1) == 's' && newline.charAt(2) == 'e' && newline.charAt(3) == 'm' && newline.charAt(4) == 't' && newline.charAt(5) == 'l') {
+                                        //USES MATERIALS
+                                        if (newline.startsWith("usemtl")) {
                                             String[] coords = new String[2];
                                             String[] coordstext = new String[3];
                                             coordstext = newline.split("\\s+");
                                             coords[0] = coordstext[1];
                                             coords[1] = facecounter + "";
                                             mattimings.add(coords);
-                                            //System.out.println(coords[0] + ", " + coords[1]);
+                                            // System.out.println(coords[0] + ", " + coords[1]);
                                         }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -251,7 +287,7 @@ public class GLModel{
         return numpolys;
     }
 
-    public void opengldrawtolist(GL2 gl){
+    public void opengldrawtolist(GL2 gl) throws FileNotFoundException {
         ////////////////////////////////////////
         /// With Materials if available ////////
         ////////////////////////////////////////
@@ -272,8 +308,78 @@ public class GLModel{
         gl.glNewList(objectlist,GL2.GL_COMPILE);
         for (int i=0;i<faces.size();i++) {
             if (i == nextmat) {
-                gl.glEnable(GL2.GL_COLOR_MATERIAL);
-                gl.glColor4f((materials.getKd(nextmatname))[0],(materials.getKd(nextmatname))[1],(materials.getKd(nextmatname))[2],(materials.getd(nextmatname)));
+                if(materials.hasTextureMap) {
+                    int kaTexture;
+                    int kdTexture;
+                    int ksTexture;
+
+                    gl.glEnable(GL2.GL_TEXTURE_2D);
+
+                    String[] temp;
+                    temp = Arrays.copyOf(mtl_path.split("/"), mtl_path.split("/").length - 1);
+                    String resPath = new String();
+                    StringBuilder sb = new StringBuilder();
+
+                    for (String s : temp) {
+                        sb.append(s + "/");
+                    }
+
+                    resPath = sb.toString();
+
+                    try {
+                        URL textureUrl = new URL("file", "localhost", (resPath + nextmatname + ".png"));
+
+                        if (materials.kaTexturePath != null) {
+                            kaTexture = genTexture(gl);
+                            gl.glBindTexture(GL.GL_TEXTURE_2D, kaTexture);
+                            BufferedImage img = readPng(resPath + nextmatname + ".png");
+                            if (img.getType() == BufferedImage.TYPE_4BYTE_ABGR) {
+                                TextureIO.newTexture(textureUrl, true, null);
+                            } else {
+                                makeRgbTexture(gl, glu, img, GL.GL_TEXTURE_2D, false);
+                            }
+                            gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+                            gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+                        }
+
+                        if (materials.kdTexturePath != null) {
+                            kdTexture = genTexture(gl);
+                            gl.glBindTexture(GL.GL_TEXTURE_2D, kdTexture);
+                            BufferedImage img = readPng(resPath + nextmatname + ".png");
+                            if (img.getType() == BufferedImage.TYPE_4BYTE_ABGR) {
+                                TextureIO.newTexture(textureUrl, true, null);
+                            } else {
+                                makeRgbTexture(gl, glu, img, GL.GL_TEXTURE_2D, false);
+                            }
+                            gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+                            gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+                        }
+
+                        if (materials.ksTexturePath != null) {
+                            ksTexture = genTexture(gl);
+                            gl.glBindTexture(GL.GL_TEXTURE_2D, ksTexture);
+                            BufferedImage img = readPng(resPath + nextmatname + ".png");
+                            if (img.getType() == BufferedImage.TYPE_4BYTE_ABGR) {
+                                TextureIO.newTexture(textureUrl, true, null);
+                            } else {
+                                makeRgbTexture(gl, glu, img, GL.GL_TEXTURE_2D, false);
+                            }
+                            gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+                            gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+                        }
+
+                    } catch (MalformedURLException e) {
+
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+                else {
+                    gl.glEnable(GL2.GL_COLOR_MATERIAL);
+                    gl.glColor4f((materials.getKd(nextmatname))[0], (materials.getKd(nextmatname))[1], (materials.getKd(nextmatname))[2], (materials.getd(nextmatname)));
+                }
                 matcount++;
                 if (matcount < totalmats) {
                     nextmatnamearray = (String[])(mattimings.get(matcount));
@@ -327,6 +433,70 @@ public class GLModel{
 
         }
         gl.glEndList();
+    }
+
+    private BufferedImage readPng(String resName) {
+        try{
+            URL url = new URL("file", "localhost", resName);
+
+            BufferedImage img = ImageIO.read(url);
+
+            AffineTransform tx = AffineTransform.getScaleInstance(1, -1);
+            tx.translate(0, -img.getHeight(null));
+
+            AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+            img = op.filter(img, null);
+
+            return img;
+        } catch (MalformedURLException e) {
+            System.err.println("Couldn't find " + resName + " in the expected directory.");
+            e.getMessage();
+            e.printStackTrace();
+
+            return null;
+        } catch (IOException e) {
+            System.err.println("Couldn't load " + resName + " in the expected directory.");
+            e.getMessage();
+            e.printStackTrace();
+
+            return null;
+        }
+    }
+
+    private void makeRgbTexture(GL gl, GLU glu, BufferedImage img, int target, boolean mipmapped) {
+        ByteBuffer destination = null;
+        int temp = img.getType();
+        switch(img.getType()) {
+            case BufferedImage.TYPE_3BYTE_BGR:
+            case BufferedImage.TYPE_CUSTOM:
+                byte[] bData = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
+                destination = ByteBuffer.allocateDirect(bData.length);
+                destination.put(bData, 0, bData.length);
+                break;
+
+            case BufferedImage.TYPE_INT_RGB:
+                int[] iData = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
+                destination = ByteBuffer.allocateDirect(iData.length * BufferUtil.SIZEOF_INT);
+                destination.order(ByteOrder.nativeOrder());
+                destination.asIntBuffer().put(iData, 0, iData.length);
+                break;
+
+            default:
+                throw new RuntimeException("Unsupported image type " + img.getType());
+        }
+
+        if(mipmapped) {
+            glu.gluBuild2DMipmaps(target, GL.GL_RGB8, img.getWidth(), img.getHeight(), GL.GL_RGB, GL.GL_UNSIGNED_BYTE, destination);
+        }
+        else {
+            gl.glTexImage2D(target, 0, GL.GL_RGB, img.getWidth(), img.getHeight(), 0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, destination);
+        }
+    }
+
+    private int genTexture(GL gl) {
+        final int[] temp = new int[1];
+        gl.glGenTextures(1, temp, 0);
+        return temp[0];
     }
 
     public void opengldraw(GL2 gl){

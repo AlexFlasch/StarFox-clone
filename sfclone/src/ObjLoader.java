@@ -1,13 +1,6 @@
 import java.io.*;
 
-import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL2;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.awt.image.PixelGrabber;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 
 /**
  * Image loading class that converts BufferedImages into a data structure that
@@ -15,9 +8,11 @@ import java.nio.ByteBuffer;
  *
  * @author Pepijn Van Eeckhoudt Downloaded from:
  *         http://www.felixgers.de/teaching/jogl/
+ *
+ * Modified by Alex Flasch to use JOGL
  */
 
-// Uses the class GLModel from JautOGL to load and display obj files.
+// Uses the class GLModel.java from JautOGL to load and display obj files.
 public class ObjLoader {
 	
 	/*
@@ -28,7 +23,7 @@ public class ObjLoader {
 			FileInputStream r_path1 = new FileInputStream(path1);
 			BufferedReader b_read1 = new BufferedReader(new InputStreamReader(
 					r_path1));
-			model1 = new GLModel(b_read1, true,
+			model1 = new GLModel.java(b_read1, true,
 					"W:\\nauka\\msc\\gk\\asemalaituri\\spot.mtl", gl);
 			r_path1.close();
 			b_read1.close();
