@@ -1,12 +1,8 @@
-import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
-import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.glu.GLU;
 import com.jogamp.opengl.util.texture.TextureIO;
-import com.jogamp.opengl.util.texture.awt.AWTTextureIO;
 import com.sun.prism.impl.BufferUtil;
-import jogamp.opengl.glu.mipmap.Image;
 
 import javax.imageio.ImageIO;
 import java.awt.geom.AffineTransform;
@@ -19,7 +15,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.StringTokenizer;
@@ -30,142 +25,141 @@ import java.util.StringTokenizer;
  * Modified by Alex Flasch to use JOGL
  */
 
-public class GLModel{
+class GLModel{
 
-    private ArrayList vertexsets;
-    private ArrayList vertexsetsnorms;
-    private ArrayList vertexsetstexs;
-    private ArrayList faces;
-    private ArrayList facestexs;
-    private ArrayList facesnorms;
-    private ArrayList mattimings;
+    private ArrayList<float[]> vertSets;
+    private ArrayList<float[]> vertSetNorms;
+    private ArrayList<float[]> vertSetTextures;
+    private ArrayList<int[]> faces;
+    private ArrayList<int[]> faceTextures;
+    private ArrayList<int[]> faceNorms;
+    private ArrayList<String[]> mtlTimings;
     private MtlLoader materials;
-    private int objectlist;
-    private int numpolys;
-    public float toppoint;
-    public float bottompoint;
-    public float leftpoint;
-    public float rightpoint;
-    public float farpoint;
-    public float nearpoint;
-    private String mtl_path;
+    private int objectList;
+    private int numPolys;
+    private float topPoint;
+    private float bottomPoint;
+    private float leftPoint;
+    private float rightPoint;
+    private float farPoint;
+    private float nearPoint;
+    private String mtlPath;
+    private int numTextures;
 
-    GLU glu;
+    private GLU glu;
 
     //THIS CLASS LOADS THE MODELS
-    public GLModel(BufferedReader ref, boolean centerit, String path, GL2 gl){
+    GLModel(BufferedReader ref, boolean centerIt, String path, GL2 gl){
         glu = new GLU();
 
-        mtl_path=path;
-        vertexsets = new ArrayList();
-        vertexsetsnorms = new ArrayList();
-        vertexsetstexs = new ArrayList();
-        faces = new ArrayList();
-        facestexs = new ArrayList();
-        facesnorms = new ArrayList();
-        mattimings = new ArrayList();
-        numpolys = 0;
-        toppoint = 0.0F;
-        bottompoint = 0.0F;
-        leftpoint = 0.0F;
-        rightpoint = 0.0F;
-        farpoint = 0.0F;
-        nearpoint = 0.0F;
-        loadobject(ref);
-        if(centerit)
-            centerit();
+        mtlPath = path;
+        vertSets = new ArrayList<>();
+        vertSetNorms = new ArrayList<>();
+        vertSetTextures = new ArrayList<>();
+        faces = new ArrayList<>();
+        faceTextures = new ArrayList<>();
+        faceNorms = new ArrayList<>();
+        mtlTimings = new ArrayList<>();
+        numTextures = 0;
+        numPolys = 0;
+        topPoint = 0.0F;
+        bottomPoint = 0.0F;
+        leftPoint = 0.0F;
+        rightPoint = 0.0F;
+        farPoint = 0.0F;
+        nearPoint = 0.0F;
+        loadObject(ref);
+        if(centerIt)
+            centerIt();
         try{
-            opengldrawtolist(gl);
+            for(int i = 0; i < numTextures; i++) {
+                drawToList(gl);
+            }
         }
         catch(FileNotFoundException e) {
             System.out.println("File not found.");
             e.getMessage();
         }
-        numpolys = faces.size();
+        numPolys = faces.size();
         cleanup();
     }
 
     private void cleanup(){
-        vertexsets.clear();
-        vertexsetsnorms.clear();
-        vertexsetstexs.clear();
+        vertSets.clear();
+        vertSetNorms.clear();
+        vertSetTextures.clear();
         faces.clear();
-        facestexs.clear();
-        facesnorms.clear();
+        faceTextures.clear();
+        faceNorms.clear();
     }
 
-    private void loadobject(BufferedReader br){
-        int linecounter = 0;
-        int facecounter = 0;
+    private void loadObject(BufferedReader br){
+        int faceCounter = 0;
         try{
-            boolean firstpass = true;
+            boolean firstPass = true;
             String newline;
             while((newline = br.readLine()) != null){
-                linecounter++;
                 if(newline.length() > 0){
                     newline = newline.trim();
 
                     //LOADS VERTEX COORDINATES
                     if(newline.startsWith("v ")){
                         float coords[] = new float[4];
-                        String coordstext[] = new String[4];
                         newline = newline.substring(2, newline.length());
                         StringTokenizer st = new StringTokenizer(newline, " ");
                         for(int i = 0; st.hasMoreTokens(); i++)
                             coords[i] = Float.parseFloat(st.nextToken());
 
-                        if(firstpass){
-                            rightpoint = coords[0];
-                            leftpoint = coords[0];
-                            toppoint = coords[1];
-                            bottompoint = coords[1];
-                            nearpoint = coords[2];
-                            farpoint = coords[2];
-                            firstpass = false;
+                        if(firstPass){
+                            rightPoint = coords[0];
+                            leftPoint = coords[0];
+                            topPoint = coords[1];
+                            bottomPoint = coords[1];
+                            nearPoint = coords[2];
+                            farPoint = coords[2];
+                            firstPass = false;
                         }
-                        if(coords[0] > rightpoint)
-                            rightpoint = coords[0];
-                        if(coords[0] < leftpoint)
-                            leftpoint = coords[0];
-                        if(coords[1] > toppoint)
-                            toppoint = coords[1];
-                        if(coords[1] < bottompoint)
-                            bottompoint = coords[1];
-                        if(coords[2] > nearpoint)
-                            nearpoint = coords[2];
-                        if(coords[2] < farpoint)
-                            farpoint = coords[2];
-                        vertexsets.add(coords);
+                        if(coords[0] > rightPoint)
+                            rightPoint = coords[0];
+                        if(coords[0] < leftPoint)
+                            leftPoint = coords[0];
+                        if(coords[1] > topPoint)
+                            topPoint = coords[1];
+                        if(coords[1] < bottomPoint)
+                            bottomPoint = coords[1];
+                        if(coords[2] > nearPoint)
+                            nearPoint = coords[2];
+                        if(coords[2] < farPoint)
+                            farPoint = coords[2];
+                        vertSets.add(coords);
                     }
                     else {
 
                         //LOADS VERTEX TEXTURE COORDINATES
                         if (newline.startsWith("vt")) {
                             float coords[] = new float[4];
-                            String coordstext[] = new String[4];
                             newline = newline.substring(3, newline.length());
                             StringTokenizer st = new StringTokenizer(newline, " ");
                             for (int i = 0; st.hasMoreTokens(); i++)
                                 coords[i] = Float.parseFloat(st.nextToken());
 
-                            vertexsetstexs.add(coords);
+                            vertSetTextures.add(coords);
                         } else {
 
                             //LOADS VERTEX NORMALS COORDINATES
                             if (newline.startsWith("vn")) {
                                 float coords[] = new float[4];
-                                String coordstext[] = new String[4];
                                 newline = newline.substring(3, newline.length());
                                 StringTokenizer st = new StringTokenizer(newline, " ");
                                 for (int i = 0; st.hasMoreTokens(); i++)
                                     coords[i] = Float.parseFloat(st.nextToken());
 
-                                vertexsetsnorms.add(coords);
+                                vertSetNorms.add(coords);
                             } else {
 
                                 //LOADS FACES COORDINATES
                                 if (newline.startsWith("f ")) {
-                                    facecounter++;
+                                    faceCounter++;
                                     newline = newline.substring(2, newline.length());
                                     StringTokenizer st = new StringTokenizer(newline, " ");
                                     int count = st.countTokens();
@@ -174,12 +168,12 @@ public class GLModel{
                                     int vn[] = new int[count];
                                     for (int i = 0; i < count; i++) {
                                         char chars[] = st.nextToken().toCharArray();
-                                        StringBuffer sb = new StringBuffer();
+                                        StringBuilder sb = new StringBuilder();
                                         char lc = 'x';
-                                        for (int k = 0; k < chars.length; k++) {
-                                            if (chars[k] == '/' && lc == '/')
+                                        for (char c : chars) {
+                                            if (c == '/' && lc == '/')
                                                 sb.append('0');
-                                            lc = chars[k];
+                                            lc = c;
                                             sb.append(lc);
                                         }
 
@@ -198,26 +192,25 @@ public class GLModel{
                                     }
 
                                     faces.add(v);
-                                    facestexs.add(vt);
-                                    facesnorms.add(vn);
+                                    faceTextures.add(vt);
+                                    faceNorms.add(vn);
                                 } else {
 
                                     //LOADS MATERIALS
                                     if (newline.startsWith("mtllib")) {
-                                        String[] coordstext = new String[3];
-                                        coordstext = newline.split("\\s+");
-                                        if (mtl_path != null)
-                                            loadmaterials();
+                                        if (mtlPath != null)
+                                            loadMaterials();
                                     } else {
 
                                         //USES MATERIALS
                                         if (newline.startsWith("usemtl")) {
+                                            numTextures++;
                                             String[] coords = new String[2];
-                                            String[] coordstext = new String[3];
-                                            coordstext = newline.split("\\s+");
-                                            coords[0] = coordstext[1];
-                                            coords[1] = facecounter + "";
-                                            mattimings.add(coords);
+                                            String[] textureCoords;
+                                            textureCoords = newline.split("\\s+");
+                                            coords[0] = textureCoords[1];
+                                            coords[1] = faceCounter + "";
+                                            mtlTimings.add(coords);
                                             // System.out.println(coords[0] + ", " + coords[1]);
                                         }
                                     }
@@ -236,78 +229,72 @@ public class GLModel{
         }
     }
 
-    private void loadmaterials() {
+    private void loadMaterials() {
         FileReader frm;
-        String refm = mtl_path;
+        String mtlRef = mtlPath;
 
         try {
-            frm = new FileReader(refm);
+            frm = new FileReader(mtlRef);
             BufferedReader brm = new BufferedReader(frm);
-            materials = new MtlLoader(brm,mtl_path);
+            materials = new MtlLoader(brm, mtlPath);
             frm.close();
         } catch (IOException e) {
-            System.out.println("Could not open file: " + refm);
+            System.out.println("Could not open file: " + mtlRef);
             materials = null;
         }
     }
 
-    private void centerit(){
-        float xshift = (rightpoint - leftpoint) / 2.0F;
-        float yshift = (toppoint - bottompoint) / 2.0F;
-        float zshift = (nearpoint - farpoint) / 2.0F;
-        for(int i = 0; i < vertexsets.size(); i++){
+    private void centerIt(){
+        float xShift = (rightPoint - leftPoint) / 2.0F;
+        float yShift = (topPoint - bottomPoint) / 2.0F;
+        float zShift = (nearPoint - farPoint) / 2.0F;
+        for(int i = 0; i < vertSets.size(); i++){
             float coords[] = new float[4];
-            coords[0] = ((float[])vertexsets.get(i))[0] - leftpoint - xshift;
-            coords[1] = ((float[])vertexsets.get(i))[1] - bottompoint - yshift;
-            coords[2] = ((float[])vertexsets.get(i))[2] - farpoint - zshift;
-            vertexsets.set(i, coords);
+            coords[0] = (vertSets.get(i))[0] - leftPoint - xShift;
+            coords[1] = (vertSets.get(i))[1] - bottomPoint - yShift;
+            coords[2] = (vertSets.get(i))[2] - farPoint - zShift;
+            vertSets.set(i, coords);
         }
 
     }
 
-    public float getXWidth(){
-        float returnval = 0.0F;
-        returnval = rightpoint - leftpoint;
-        return returnval;
+    float getXWidth(){
+        return rightPoint - leftPoint;
     }
 
-    public float getYHeight(){
-        float returnval = 0.0F;
-        returnval = toppoint - bottompoint;
-        return returnval;
+    float getYHeight(){
+        return topPoint - bottomPoint;
     }
 
-    public float getZDepth(){
-        float returnval = 0.0F;
-        returnval = nearpoint - farpoint;
-        return returnval;
+    float getZDepth(){
+        return nearPoint - farPoint;
     }
 
-    public int numpolygons(){
-        return numpolys;
+    public int numPolygons(){
+        return numPolys;
     }
 
-    public void opengldrawtolist(GL2 gl) throws FileNotFoundException {
+    private void drawToList(GL2 gl) throws FileNotFoundException {
         ////////////////////////////////////////
         /// With Materials if available ////////
         ////////////////////////////////////////
-        this.objectlist = gl.glGenLists(1);
+        this.objectList = gl.glGenLists(1);
 
-        int nextmat = -1;
-        int matcount = 0;
-        int totalmats = mattimings.size();
-        String[] nextmatnamearray = null;
-        String nextmatname = null;
+        int nextMtl = -1;
+        int mtlCount = 0;
+        int totalMtls = mtlTimings.size();
+        String[] nextMtlNameArr;
+        String nextMtlName = null;
 
-        if (totalmats > 0 && materials != null) {
-            nextmatnamearray = (String[])(mattimings.get(matcount));
-            nextmatname = nextmatnamearray[0];
-            nextmat = Integer.parseInt(nextmatnamearray[1]);
+        if (totalMtls > 0 && materials != null) {
+            nextMtlNameArr = mtlTimings.get(mtlCount);
+            nextMtlName = nextMtlNameArr[0];
+            nextMtl = Integer.parseInt(nextMtlNameArr[1]);
         }
 
-        gl.glNewList(objectlist,GL2.GL_COMPILE);
+        gl.glNewList(objectList,GL2.GL_COMPILE);
         for (int i=0;i<faces.size();i++) {
-            if (i == nextmat) {
+            if (i == nextMtl) {
                 if(materials.hasTextureMap) {
                     int kaTexture;
                     int kdTexture;
@@ -316,23 +303,24 @@ public class GLModel{
                     gl.glEnable(GL2.GL_TEXTURE_2D);
 
                     String[] temp;
-                    temp = Arrays.copyOf(mtl_path.split("/"), mtl_path.split("/").length - 1);
-                    String resPath = new String();
+                    temp = Arrays.copyOf(mtlPath.split("/"), mtlPath.split("/").length - 1);
+                    String resPath;
                     StringBuilder sb = new StringBuilder();
 
                     for (String s : temp) {
-                        sb.append(s + "/");
+                        sb.append(s).append("/");
                     }
 
                     resPath = sb.toString();
 
                     try {
-                        URL textureUrl = new URL("file", "localhost", (resPath + nextmatname + ".png"));
+                        URL textureUrl = new URL("file", "localhost", (resPath + nextMtlName + ".png"));
 
                         if (materials.kaTexturePath != null) {
                             kaTexture = genTexture(gl);
                             gl.glBindTexture(GL.GL_TEXTURE_2D, kaTexture);
-                            BufferedImage img = readPng(resPath + nextmatname + ".png");
+                            BufferedImage img = readPng(resPath + nextMtlName + ".png");
+                            assert img != null;
                             if (img.getType() == BufferedImage.TYPE_4BYTE_ABGR) {
                                 TextureIO.newTexture(textureUrl, true, null);
                             } else {
@@ -345,7 +333,8 @@ public class GLModel{
                         if (materials.kdTexturePath != null) {
                             kdTexture = genTexture(gl);
                             gl.glBindTexture(GL.GL_TEXTURE_2D, kdTexture);
-                            BufferedImage img = readPng(resPath + nextmatname + ".png");
+                            BufferedImage img = readPng(resPath + nextMtlName + ".png");
+                            assert img != null;
                             if (img.getType() == BufferedImage.TYPE_4BYTE_ABGR) {
                                 TextureIO.newTexture(textureUrl, true, null);
                             } else {
@@ -358,7 +347,8 @@ public class GLModel{
                         if (materials.ksTexturePath != null) {
                             ksTexture = genTexture(gl);
                             gl.glBindTexture(GL.GL_TEXTURE_2D, ksTexture);
-                            BufferedImage img = readPng(resPath + nextmatname + ".png");
+                            BufferedImage img = readPng(resPath + nextMtlName + ".png");
+                            assert img != null;
                             if (img.getType() == BufferedImage.TYPE_4BYTE_ABGR) {
                                 TextureIO.newTexture(textureUrl, true, null);
                             } else {
@@ -368,9 +358,6 @@ public class GLModel{
                             gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
                         }
 
-                    } catch (MalformedURLException e) {
-
-                        e.printStackTrace();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -378,51 +365,51 @@ public class GLModel{
                 }
                 else {
                     gl.glEnable(GL2.GL_COLOR_MATERIAL);
-                    gl.glColor4f((materials.getKd(nextmatname))[0], (materials.getKd(nextmatname))[1], (materials.getKd(nextmatname))[2], (materials.getd(nextmatname)));
+                    gl.glColor4f((materials.getKd(nextMtlName))[0], (materials.getKd(nextMtlName))[1], (materials.getKd(nextMtlName))[2], (materials.getd(nextMtlName)));
                 }
-                matcount++;
-                if (matcount < totalmats) {
-                    nextmatnamearray = (String[])(mattimings.get(matcount));
-                    nextmatname = nextmatnamearray[0];
-                    nextmat = Integer.parseInt(nextmatnamearray[1]);
+                mtlCount++;
+                if (mtlCount < totalMtls) {
+                    nextMtlNameArr = mtlTimings.get(mtlCount);
+                    nextMtlName = nextMtlNameArr[0];
+                    nextMtl = Integer.parseInt(nextMtlNameArr[1]);
                 }
             }
 
-            int[] tempfaces = (int[])(faces.get(i));
-            int[] tempfacesnorms = (int[])(facesnorms.get(i));
-            int[] tempfacestexs = (int[])(facestexs.get(i));
+            int[] tempFaces = faces.get(i);
+            int[] tempFacesNorms = faceNorms.get(i);
+            int[] tempFacesTextures = faceTextures.get(i);
 
             //// Quad Begin Header ////
-            int polytype;
-            if (tempfaces.length == 3) {
-                polytype = gl.GL_TRIANGLES;
-            } else if (tempfaces.length == 4) {
-                polytype = gl.GL_QUADS;
+            int polyType;
+            if (tempFaces.length == 3) {
+                polyType = GL2.GL_TRIANGLES;
+            } else if (tempFaces.length == 4) {
+                polyType = GL2.GL_QUADS;
             } else {
-                polytype = gl.GL_POLYGON;
+                polyType = GL2.GL_POLYGON;
             }
-            gl.glBegin(polytype);
+            gl.glBegin(polyType);
             ////////////////////////////
 
-            for (int w=0;w<tempfaces.length;w++) {
-                if (tempfacesnorms[w] != 0) {
-                    float normtempx = ((float[])vertexsetsnorms.get(tempfacesnorms[w] - 1))[0];
-                    float normtempy = ((float[])vertexsetsnorms.get(tempfacesnorms[w] - 1))[1];
-                    float normtempz = ((float[])vertexsetsnorms.get(tempfacesnorms[w] - 1))[2];
-                    gl.glNormal3f(normtempx, normtempy, normtempz);
+            for (int w=0;w<tempFaces.length;w++) {
+                if (tempFacesNorms[w] != 0) {
+                    float tempNormX = vertSetNorms.get(tempFacesNorms[w] - 1)[0];
+                    float tempNormY = vertSetNorms.get(tempFacesNorms[w] - 1)[1];
+                    float tempNormZ = vertSetNorms.get(tempFacesNorms[w] - 1)[2];
+                    gl.glNormal3f(tempNormX, tempNormY, tempNormZ);
                 }
 
-                if (tempfacestexs[w] != 0) {
-                    float textempx = ((float[])vertexsetstexs.get(tempfacestexs[w] - 1))[0];
-                    float textempy = ((float[])vertexsetstexs.get(tempfacestexs[w] - 1))[1];
-                    float textempz = ((float[])vertexsetstexs.get(tempfacestexs[w] - 1))[2];
-                    gl.glTexCoord3f(textempx,1f-textempy,textempz);
+                if (tempFacesTextures[w] != 0) {
+                    float tempTextureX = vertSetTextures.get(tempFacesTextures[w] - 1)[0];
+                    float tempTextureY = vertSetTextures.get(tempFacesTextures[w] - 1)[1];
+                    float tempTextureZ = vertSetTextures.get(tempFacesTextures[w] - 1)[2];
+                    gl.glTexCoord3f(tempTextureX,1f-tempTextureY,tempTextureZ);
                 }
 
-                float tempx = ((float[])vertexsets.get(tempfaces[w] - 1))[0];
-                float tempy = ((float[])vertexsets.get(tempfaces[w] - 1))[1];
-                float tempz = ((float[])vertexsets.get(tempfaces[w] - 1))[2];
-                gl.glVertex3f(tempx,tempy,tempz);
+                float tempX = vertSets.get(tempFaces[w] - 1)[0];
+                float tempY = vertSets.get(tempFaces[w] - 1)[1];
+                float tempZ = vertSets.get(tempFaces[w] - 1)[2];
+                gl.glVertex3f(tempX,tempY,tempZ);
             }
 
 
@@ -464,21 +451,20 @@ public class GLModel{
     }
 
     private void makeRgbTexture(GL gl, GLU glu, BufferedImage img, int target, boolean mipmapped) {
-        ByteBuffer destination = null;
-        int temp = img.getType();
+        ByteBuffer buffer;
         switch(img.getType()) {
             case BufferedImage.TYPE_3BYTE_BGR:
             case BufferedImage.TYPE_CUSTOM:
                 byte[] bData = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
-                destination = ByteBuffer.allocateDirect(bData.length);
-                destination.put(bData, 0, bData.length);
+                buffer = ByteBuffer.allocateDirect(bData.length);
+                buffer.put(bData, 0, bData.length);
                 break;
 
             case BufferedImage.TYPE_INT_RGB:
                 int[] iData = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
-                destination = ByteBuffer.allocateDirect(iData.length * BufferUtil.SIZEOF_INT);
-                destination.order(ByteOrder.nativeOrder());
-                destination.asIntBuffer().put(iData, 0, iData.length);
+                buffer = ByteBuffer.allocateDirect(iData.length * BufferUtil.SIZEOF_INT);
+                buffer.order(ByteOrder.nativeOrder());
+                buffer.asIntBuffer().put(iData, 0, iData.length);
                 break;
 
             default:
@@ -486,10 +472,10 @@ public class GLModel{
         }
 
         if(mipmapped) {
-            glu.gluBuild2DMipmaps(target, GL.GL_RGB8, img.getWidth(), img.getHeight(), GL.GL_RGB, GL.GL_UNSIGNED_BYTE, destination);
+            glu.gluBuild2DMipmaps(target, GL.GL_RGB8, img.getWidth(), img.getHeight(), GL.GL_RGB, GL.GL_UNSIGNED_BYTE, buffer);
         }
         else {
-            gl.glTexImage2D(target, 0, GL.GL_RGB, img.getWidth(), img.getHeight(), 0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, destination);
+            gl.glTexImage2D(target, 0, GL.GL_RGB, img.getWidth(), img.getHeight(), 0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, buffer);
         }
     }
 
@@ -499,8 +485,11 @@ public class GLModel{
         return temp[0];
     }
 
-    public void opengldraw(GL2 gl){
-        gl.glCallList(objectlist);
+    void draw(GL2 gl){
+        gl.glCallList(objectList);
         gl.glDisable(GL2.GL_COLOR_MATERIAL);
+        if(materials.hasTextureMap) {
+            gl.glDisable(GL2.GL_TEXTURE_2D);
+        }
     }
 }

@@ -37,7 +37,7 @@ public class ObjLoader {
 
 	public void draw(GL2 gl) {
 		gl.glPushMatrix();
-		model1.opengldraw(gl);
+		model1.draw(gl);
 		gl.glPopMatrix();
 
 	}*/

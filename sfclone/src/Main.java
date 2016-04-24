@@ -1,14 +1,10 @@
 import com.jogamp.opengl.*;
-import com.jogamp.opengl.awt.GLCanvas;
 import com.jogamp.opengl.awt.GLJPanel;
 import com.jogamp.opengl.glu.GLU;
 import com.jogamp.opengl.util.FPSAnimator;
 import com.jogamp.opengl.util.gl2.GLUT;
-import jogamp.opengl.glu.GLUquadricImpl;
 
 import javax.swing.*;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
 
 /**
  * Created by alexa on 4/12/2016.
@@ -126,7 +122,7 @@ public class Main extends JFrame implements GLEventListener {
         gl.glTranslated(0, 0, translateAmount);
         gl.glRotated(1.0, 0, 1, 0);
         gl.glScaled(0.5, 0.5, 0.5);
-        arwing.opengldraw(gl);
+        arwing.draw(gl);
         gl.glPopMatrix();
 
         gl.glFlush();
