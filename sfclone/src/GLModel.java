@@ -34,8 +34,10 @@ class GLModel{
     private ArrayList<int[]> faceTextures;
     private ArrayList<int[]> faceNorms;
     private ArrayList<String[]> mtlTimings;
+    private ArrayList<Integer> glTextures;
+    private int[] boundTextures;
     private MtlLoader materials;
-    private int objectList;
+    private ArrayList<Integer> objectLists;
     private int numPolys;
     private float topPoint;
     private float bottomPoint;
@@ -59,7 +61,9 @@ class GLModel{
         faces = new ArrayList<>();
         faceTextures = new ArrayList<>();
         faceNorms = new ArrayList<>();
+        glTextures = new ArrayList<>();
         mtlTimings = new ArrayList<>();
+        objectLists = new ArrayList<>();
         numTextures = 0;
         numPolys = 0;
         topPoint = 0.0F;
@@ -72,9 +76,7 @@ class GLModel{
         if(centerIt)
             centerIt();
         try{
-            for(int i = 0; i < numTextures; i++) {
-                drawToList(gl);
-            }
+            drawToList(gl);
         }
         catch(FileNotFoundException e) {
             System.out.println("File not found.");
@@ -229,6 +231,76 @@ class GLModel{
         }
     }
 
+    private void generateTexture(GL2 gl, int i) {
+        if(materials.hasTextureMap) {
+            int kaTexture;
+            int kdTexture;
+            int ksTexture;
+
+            String[] temp;
+            temp = Arrays.copyOf(mtlPath.split("/"), mtlPath.split("/").length - 1);
+            String resPath;
+            StringBuilder sb = new StringBuilder();
+
+            for (String s : temp) {
+                sb.append(s).append("/");
+            }
+
+            resPath = sb.toString();
+            String mtlName = mtlTimings.get(i)[0];
+            boundTextures = new int[mtlTimings.size()];
+
+            gl.glGenTextures(mtlTimings.size(), boundTextures, 0);
+
+            try {
+                URL textureUrl = new URL("file", "localhost", (resPath + mtlName + ".png"));
+
+                if (materials.kaTexturePath != null) {
+//                    gl.glBindTexture(GL.GL_TEXTURE_2D, kaTexture);
+                    BufferedImage img = readPng(resPath + mtlName + ".png");
+                    assert img != null;
+                    glTextures.add(i, boundTextures[i]);
+                    if (img.getType() == BufferedImage.TYPE_4BYTE_ABGR) {
+                        TextureIO.newTexture(textureUrl, true, null);
+                    } else {
+                        makeRgbTexture(gl, glu, img, GL.GL_TEXTURE_2D, false);
+                    }
+                }
+
+                if (materials.kdTexturePath != null) {
+//                    gl.glBindTexture(GL.GL_TEXTURE_2D, kdTexture);
+                    BufferedImage img = readPng(resPath + mtlName+ ".png");
+                    assert img != null;
+                    glTextures.add(i, boundTextures[i]);
+                    if (img.getType() == BufferedImage.TYPE_4BYTE_ABGR) {
+                        TextureIO.newTexture(textureUrl, true, null);
+                    } else {
+                        makeRgbTexture(gl, glu, img, GL.GL_TEXTURE_2D, false);
+                    }
+                }
+
+                if (materials.ksTexturePath != null) {
+//                    gl.glBindTexture(GL.GL_TEXTURE_2D, ksTexture);
+                    BufferedImage img = readPng(resPath + mtlName + ".png");
+                    assert img != null;
+                    glTextures.add(i, boundTextures[i]);
+                    if (img.getType() == BufferedImage.TYPE_4BYTE_ABGR) {
+                        TextureIO.newTexture(textureUrl, true, null);
+                    } else {
+                        makeRgbTexture(gl, glu, img, GL.GL_TEXTURE_2D, false);
+                    }
+                }
+
+                gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+                gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
     private void loadMaterials() {
         FileReader frm;
         String mtlRef = mtlPath;
@@ -278,7 +350,6 @@ class GLModel{
         ////////////////////////////////////////
         /// With Materials if available ////////
         ////////////////////////////////////////
-        this.objectList = gl.glGenLists(1);
 
         int nextMtl = -1;
         int mtlCount = 0;
@@ -286,140 +357,76 @@ class GLModel{
         String[] nextMtlNameArr;
         String nextMtlName = null;
 
-        if (totalMtls > 0 && materials != null) {
-            nextMtlNameArr = mtlTimings.get(mtlCount);
-            nextMtlName = nextMtlNameArr[0];
-            nextMtl = Integer.parseInt(nextMtlNameArr[1]);
-        }
+        for(int i = 0; i < numTextures; i++) {
+            this.objectLists.add(gl.glGenLists(1));
 
-        gl.glNewList(objectList,GL2.GL_COMPILE);
-        for (int i=0;i<faces.size();i++) {
-            if (i == nextMtl) {
-                if(materials.hasTextureMap) {
-                    int kaTexture;
-                    int kdTexture;
-                    int ksTexture;
+            if (totalMtls > 0 && materials != null) {
+                nextMtlNameArr = mtlTimings.get(mtlCount);
+                nextMtlName = nextMtlNameArr[0];
+                nextMtl = Integer.parseInt(nextMtlNameArr[1]);
+            }
 
+            gl.glNewList(objectLists.get(i), GL2.GL_COMPILE);
+            for (int j = 0; j < faces.size(); j++) {
+                if (j == nextMtl) {
                     gl.glEnable(GL2.GL_TEXTURE_2D);
-
-                    String[] temp;
-                    temp = Arrays.copyOf(mtlPath.split("/"), mtlPath.split("/").length - 1);
-                    String resPath;
-                    StringBuilder sb = new StringBuilder();
-
-                    for (String s : temp) {
-                        sb.append(s).append("/");
-                    }
-
-                    resPath = sb.toString();
-
-                    try {
-                        URL textureUrl = new URL("file", "localhost", (resPath + nextMtlName + ".png"));
-
-                        if (materials.kaTexturePath != null) {
-                            kaTexture = genTexture(gl);
-                            gl.glBindTexture(GL.GL_TEXTURE_2D, kaTexture);
-                            BufferedImage img = readPng(resPath + nextMtlName + ".png");
-                            assert img != null;
-                            if (img.getType() == BufferedImage.TYPE_4BYTE_ABGR) {
-                                TextureIO.newTexture(textureUrl, true, null);
-                            } else {
-                                makeRgbTexture(gl, glu, img, GL.GL_TEXTURE_2D, false);
-                            }
-                            gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-                            gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
-                        }
-
-                        if (materials.kdTexturePath != null) {
-                            kdTexture = genTexture(gl);
-                            gl.glBindTexture(GL.GL_TEXTURE_2D, kdTexture);
-                            BufferedImage img = readPng(resPath + nextMtlName + ".png");
-                            assert img != null;
-                            if (img.getType() == BufferedImage.TYPE_4BYTE_ABGR) {
-                                TextureIO.newTexture(textureUrl, true, null);
-                            } else {
-                                makeRgbTexture(gl, glu, img, GL.GL_TEXTURE_2D, false);
-                            }
-                            gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-                            gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
-                        }
-
-                        if (materials.ksTexturePath != null) {
-                            ksTexture = genTexture(gl);
-                            gl.glBindTexture(GL.GL_TEXTURE_2D, ksTexture);
-                            BufferedImage img = readPng(resPath + nextMtlName + ".png");
-                            assert img != null;
-                            if (img.getType() == BufferedImage.TYPE_4BYTE_ABGR) {
-                                TextureIO.newTexture(textureUrl, true, null);
-                            } else {
-                                makeRgbTexture(gl, glu, img, GL.GL_TEXTURE_2D, false);
-                            }
-                            gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-                            gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
-                        }
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-                else {
+                    generateTexture(gl, i);
                     gl.glEnable(GL2.GL_COLOR_MATERIAL);
                     gl.glColor4f((materials.getKd(nextMtlName))[0], (materials.getKd(nextMtlName))[1], (materials.getKd(nextMtlName))[2], (materials.getd(nextMtlName)));
+
+                    if (mtlCount < totalMtls) {
+                        nextMtlNameArr = mtlTimings.get(mtlCount);
+                        nextMtlName = nextMtlNameArr[0];
+                        nextMtl = Integer.parseInt(nextMtlNameArr[1]);
+                    }
+                    mtlCount++;
                 }
-                mtlCount++;
-                if (mtlCount < totalMtls) {
-                    nextMtlNameArr = mtlTimings.get(mtlCount);
-                    nextMtlName = nextMtlNameArr[0];
-                    nextMtl = Integer.parseInt(nextMtlNameArr[1]);
+
+                int[] tempFaces = faces.get(j);
+                int[] tempFacesNorms = faceNorms.get(j);
+                int[] tempFacesTextures = faceTextures.get(j);
+
+                //// Quad Begin Header ////
+                int polyType;
+                if (tempFaces.length == 3) {
+                    polyType = GL2.GL_TRIANGLES;
+                } else if (tempFaces.length == 4) {
+                    polyType = GL2.GL_QUADS;
+                } else {
+                    polyType = GL2.GL_POLYGON;
                 }
+                gl.glBegin(polyType);
+                ////////////////////////////
+
+                for (int w = 0;w < tempFaces.length; w++) {
+                    if (tempFacesNorms[w] != 0) {
+                        float tempNormX = vertSetNorms.get(tempFacesNorms[w] - 1)[0];
+                        float tempNormY = vertSetNorms.get(tempFacesNorms[w] - 1)[1];
+                        float tempNormZ = vertSetNorms.get(tempFacesNorms[w] - 1)[2];
+                        gl.glNormal3f(tempNormX, tempNormY, tempNormZ);
+                    }
+
+                    if (tempFacesTextures[w] != 0) {
+                        float tempTextureX = vertSetTextures.get(tempFacesTextures[w] - 1)[0];
+                        float tempTextureY = vertSetTextures.get(tempFacesTextures[w] - 1)[1];
+                        gl.glTexCoord2f(tempTextureX, 1f-tempTextureY);
+                    }
+
+                    float tempX = vertSets.get(tempFaces[w] - 1)[0];
+                    float tempY = vertSets.get(tempFaces[w] - 1)[1];
+                    float tempZ = vertSets.get(tempFaces[w] - 1)[2];
+                    gl.glVertex3f(tempX,tempY,tempZ);
+                }
+
+
+                //// Quad End Footer /////
+                gl.glEnd();
+                ///////////////////////////
+
+
             }
-
-            int[] tempFaces = faces.get(i);
-            int[] tempFacesNorms = faceNorms.get(i);
-            int[] tempFacesTextures = faceTextures.get(i);
-
-            //// Quad Begin Header ////
-            int polyType;
-            if (tempFaces.length == 3) {
-                polyType = GL2.GL_TRIANGLES;
-            } else if (tempFaces.length == 4) {
-                polyType = GL2.GL_QUADS;
-            } else {
-                polyType = GL2.GL_POLYGON;
-            }
-            gl.glBegin(polyType);
-            ////////////////////////////
-
-            for (int w=0;w<tempFaces.length;w++) {
-                if (tempFacesNorms[w] != 0) {
-                    float tempNormX = vertSetNorms.get(tempFacesNorms[w] - 1)[0];
-                    float tempNormY = vertSetNorms.get(tempFacesNorms[w] - 1)[1];
-                    float tempNormZ = vertSetNorms.get(tempFacesNorms[w] - 1)[2];
-                    gl.glNormal3f(tempNormX, tempNormY, tempNormZ);
-                }
-
-                if (tempFacesTextures[w] != 0) {
-                    float tempTextureX = vertSetTextures.get(tempFacesTextures[w] - 1)[0];
-                    float tempTextureY = vertSetTextures.get(tempFacesTextures[w] - 1)[1];
-                    float tempTextureZ = vertSetTextures.get(tempFacesTextures[w] - 1)[2];
-                    gl.glTexCoord3f(tempTextureX,1f-tempTextureY,tempTextureZ);
-                }
-
-                float tempX = vertSets.get(tempFaces[w] - 1)[0];
-                float tempY = vertSets.get(tempFaces[w] - 1)[1];
-                float tempZ = vertSets.get(tempFaces[w] - 1)[2];
-                gl.glVertex3f(tempX,tempY,tempZ);
-            }
-
-
-            //// Quad End Footer /////
-            gl.glEnd();
-            ///////////////////////////
-
-
+            gl.glEndList();
         }
-        gl.glEndList();
     }
 
     private BufferedImage readPng(String resName) {
@@ -479,14 +486,11 @@ class GLModel{
         }
     }
 
-    private int genTexture(GL gl) {
-        final int[] temp = new int[1];
-        gl.glGenTextures(1, temp, 0);
-        return temp[0];
-    }
-
     void draw(GL2 gl){
-        gl.glCallList(objectList);
+        for(int i = 0; i < objectLists.size(); i++) {
+            gl.glBindTexture(GL2.GL_TEXTURE_2D, boundTextures[i]);
+            gl.glCallList(objectLists.get(i));
+        }
         gl.glDisable(GL2.GL_COLOR_MATERIAL);
         if(materials.hasTextureMap) {
             gl.glDisable(GL2.GL_TEXTURE_2D);

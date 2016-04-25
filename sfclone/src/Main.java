@@ -62,7 +62,7 @@ public class Main extends JFrame implements GLEventListener {
         GL2 gl = glAutoDrawable.getGL().getGL2();
 
         arwing = ObjLoader.LoadModel("sfclone/res/Arwing/arwing.obj", "sfclone/res/Arwing/arwing.mtl", gl);
-        System.out.println("Arwing dimensions (x,y,z): "+ arwing.getXWidth() + " " + arwing.getYHeight() + " " + arwing.getZDepth());
+        System.out.println("Arwing dimensions (x,y,z): " + arwing.getXWidth() + " " + arwing.getYHeight() + " " + arwing.getZDepth());
 
         gl.glEnable(GL2.GL_LIGHTING);
         gl.glEnable(GL2.GL_LIGHT0);
