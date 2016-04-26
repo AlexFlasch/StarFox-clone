@@ -1,6 +1,9 @@
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
+import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.glu.GLU;
+import com.jogamp.opengl.util.texture.Texture;
+import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
 import com.sun.prism.impl.BufferUtil;
 
@@ -34,7 +37,7 @@ class GLModel{
     private ArrayList<int[]> faceTextures;
     private ArrayList<int[]> faceNorms;
     private ArrayList<String[]> mtlTimings;
-    private ArrayList<Integer> glTextures;
+    private ArrayList<Texture> glTextures;
     private int[] boundTextures;
     private MtlLoader materials;
     private ArrayList<Integer> objectLists;
@@ -52,6 +55,15 @@ class GLModel{
 
     //THIS CLASS LOADS THE MODELS
     GLModel(BufferedReader ref, boolean centerIt, String path, GL2 gl){
+//        gl.glEnable(GL2.GL_BLEND);
+//        gl.glBlendFunc(GL2.GL_SRC_ALPHA, GL2.GL_ONE_MINUS_SRC_ALPHA);
+
+        GLCapabilities capabilities = new GLCapabilities(gl.getGLProfile());
+        capabilities.setRedBits(32);
+        capabilities.setGreenBits(32);
+        capabilities.setBlueBits(32);
+        capabilities.setAlphaBits(32);
+
         glu = new GLU();
 
         mtlPath = path;
@@ -250,7 +262,7 @@ class GLModel{
             String mtlName = mtlTimings.get(i)[0];
             boundTextures = new int[mtlTimings.size()];
 
-            gl.glGenTextures(mtlTimings.size(), boundTextures, 0);
+//            gl.glGenTextures(mtlTimings.size(), boundTextures, 0);
 
             try {
                 URL textureUrl = new URL("file", "localhost", (resPath + mtlName + ".png"));
@@ -258,10 +270,10 @@ class GLModel{
                 if (materials.kaTexturePath != null) {
 //                    gl.glBindTexture(GL.GL_TEXTURE_2D, kaTexture);
                     BufferedImage img = readPng(resPath + mtlName + ".png");
+                    File imgFile = new File(resPath + mtlName + ".png");
                     assert img != null;
-                    glTextures.add(i, boundTextures[i]);
                     if (img.getType() == BufferedImage.TYPE_4BYTE_ABGR) {
-                        TextureIO.newTexture(textureUrl, true, null);
+                        glTextures.add(TextureIO.newTexture(textureUrl, true, null));
                     } else {
                         makeRgbTexture(gl, glu, img, GL.GL_TEXTURE_2D, false);
                     }
@@ -270,10 +282,11 @@ class GLModel{
                 if (materials.kdTexturePath != null) {
 //                    gl.glBindTexture(GL.GL_TEXTURE_2D, kdTexture);
                     BufferedImage img = readPng(resPath + mtlName+ ".png");
+                    File imgFile = new File(resPath + mtlName + ".png");
                     assert img != null;
-                    glTextures.add(i, boundTextures[i]);
                     if (img.getType() == BufferedImage.TYPE_4BYTE_ABGR) {
-                        TextureIO.newTexture(textureUrl, true, null);
+                        TextureData data = TextureIO.newTextureData(gl.getGLProfile(), textureUrl, true, TextureIO.PNG);
+                        glTextures.add(TextureIO.newTexture(new File(resPath + mtlName + ".png"), true));
                     } else {
                         makeRgbTexture(gl, glu, img, GL.GL_TEXTURE_2D, false);
                     }
@@ -283,16 +296,17 @@ class GLModel{
 //                    gl.glBindTexture(GL.GL_TEXTURE_2D, ksTexture);
                     BufferedImage img = readPng(resPath + mtlName + ".png");
                     assert img != null;
-                    glTextures.add(i, boundTextures[i]);
                     if (img.getType() == BufferedImage.TYPE_4BYTE_ABGR) {
-                        TextureIO.newTexture(textureUrl, true, null);
+                        glTextures.add(TextureIO.newTexture(textureUrl, true, null));
                     } else {
                         makeRgbTexture(gl, glu, img, GL.GL_TEXTURE_2D, false);
                     }
                 }
 
-                gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-                gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+                gl.glTexParameteri(GL2.GL_TEXTURE_2D, GL2.GL_TEXTURE_WRAP_S, GL2.GL_MIRRORED_REPEAT);
+                gl.glTexParameteri(GL2.GL_TEXTURE_2D, GL2.GL_TEXTURE_WRAP_T, GL2.GL_MIRRORED_REPEAT);
+                gl.glTexParameteri(GL2.GL_TEXTURE_2D, GL2.GL_TEXTURE_MIN_FILTER, GL2.GL_LINEAR);
+                gl.glTexParameteri(GL2.GL_TEXTURE_2D, GL2.GL_TEXTURE_MAG_FILTER, GL2.GL_LINEAR);
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -357,8 +371,20 @@ class GLModel{
         String[] nextMtlNameArr;
         String nextMtlName = null;
 
+        int stopAtFace = 0;
+        int previousStopAtFace = 0;
+
         for(int i = 0; i < numTextures; i++) {
             this.objectLists.add(gl.glGenLists(1));
+
+            if(i == mtlTimings.size() - 1) {
+                previousStopAtFace = stopAtFace;
+                stopAtFace = faces.size();
+            }
+            else {
+                previousStopAtFace = stopAtFace;
+                stopAtFace = Integer.parseInt(mtlTimings.get(i + 1)[1]);
+            }
 
             if (totalMtls > 0 && materials != null) {
                 nextMtlNameArr = mtlTimings.get(mtlCount);
@@ -367,7 +393,7 @@ class GLModel{
             }
 
             gl.glNewList(objectLists.get(i), GL2.GL_COMPILE);
-            for (int j = 0; j < faces.size(); j++) {
+            for (int j = previousStopAtFace; j < stopAtFace; j++) {
                 if (j == nextMtl) {
                     gl.glEnable(GL2.GL_TEXTURE_2D);
                     generateTexture(gl, i);
@@ -395,10 +421,11 @@ class GLModel{
                 } else {
                     polyType = GL2.GL_POLYGON;
                 }
+                glTextures.get(i).bind(gl);
                 gl.glBegin(polyType);
                 ////////////////////////////
 
-                for (int w = 0;w < tempFaces.length; w++) {
+                for (int w = 0; w < tempFaces.length; w++) {
                     if (tempFacesNorms[w] != 0) {
                         float tempNormX = vertSetNorms.get(tempFacesNorms[w] - 1)[0];
                         float tempNormY = vertSetNorms.get(tempFacesNorms[w] - 1)[1];
@@ -409,7 +436,7 @@ class GLModel{
                     if (tempFacesTextures[w] != 0) {
                         float tempTextureX = vertSetTextures.get(tempFacesTextures[w] - 1)[0];
                         float tempTextureY = vertSetTextures.get(tempFacesTextures[w] - 1)[1];
-                        gl.glTexCoord2f(tempTextureX, 1f-tempTextureY);
+                        gl.glTexCoord2f(tempTextureX, tempTextureY);
                     }
 
                     float tempX = vertSets.get(tempFaces[w] - 1)[0];
@@ -488,8 +515,14 @@ class GLModel{
 
     void draw(GL2 gl){
         for(int i = 0; i < objectLists.size(); i++) {
-            gl.glBindTexture(GL2.GL_TEXTURE_2D, boundTextures[i]);
+            glTextures.get(i).enable(gl);
             gl.glCallList(objectLists.get(i));
+            if(i == 0) {
+                glTextures.get(glTextures.size() - 1).disable(gl);
+            }
+            else {
+                glTextures.get(i - 1).disable(gl);
+            }
         }
         gl.glDisable(GL2.GL_COLOR_MATERIAL);
         if(materials.hasTextureMap) {

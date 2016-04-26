@@ -20,7 +20,9 @@ public class Main extends JFrame implements GLEventListener {
     static int windowHeight;
     static double aspectRatio;
 
-    static int translateAmount = -2;
+    static int translateAmount = 0;
+
+    float rotAmount = 0f;
 
     GLModel arwing;
 
@@ -64,24 +66,34 @@ public class Main extends JFrame implements GLEventListener {
         arwing = ObjLoader.LoadModel("sfclone/res/Arwing/arwing.obj", "sfclone/res/Arwing/arwing.mtl", gl);
         System.out.println("Arwing dimensions (x,y,z): " + arwing.getXWidth() + " " + arwing.getYHeight() + " " + arwing.getZDepth());
 
+        gl.glMatrixMode(GL2.GL_PROJECTION);
+
         gl.glEnable(GL2.GL_LIGHTING);
         gl.glEnable(GL2.GL_LIGHT0);
         gl.glEnable(GL2.GL_DEPTH_TEST);
+        gl.glDepthFunc(GL2.GL_LESS);
+        gl.glDepthMask(true);
+        gl.glDepthRange(0.0f, 1.0f);
+        gl.glCullFace(GL2.GL_BACK);
         gl.glEnable(GL2.GL_CULL_FACE);
+        gl.glEnable(GL2.GL_MULTISAMPLE);
+        gl.glShadeModel(GL2.GL_SMOOTH);
 
-        gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        gl.glMatrixMode(GL2.GL_PROJECTION);
+        gl.glClearDepth(1.0f);
+
+        gl.glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         gl.glLoadIdentity();
         gl.glOrtho(-100, 100, -100, 100, -100, 100);
-        gl.glMatrixMode(GL2.GL_MODELVIEW);
 
-        glu.gluPerspective(0.1f, aspectRatio, 0.1f, 50f); // fov aspect zNear zFar
+        glu.gluPerspective(0.1f, aspectRatio, 1.0f, 500.0f); // fov aspect zNear zFar
         gl.glHint(GL2.GL_PERSPECTIVE_CORRECTION_HINT, GL2.GL_NICEST);
-        glu.gluLookAt(0f, 0f, -20f, // eyePos
+        glu.gluLookAt(0f, 0f, 20f, // eyePos
                 0f, 0f, 0f,       // lookAtPos
                 0f, 1f, 0f);      // eyeUpPos
 
-        gl.glClear(GL2.GL_CLEAR_BUFFER | GL2.GL_DEPTH_BUFFER_BIT);
+        gl.glMatrixMode(GL2.GL_MODELVIEW);
+
+        gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
 
         float gAmb[] = {1.0f, 1.0f, 1.0f, 1.0f};
         float amb[] = {0.7f, 0.7f, 0.7f, 1.0f};
@@ -94,8 +106,6 @@ public class Main extends JFrame implements GLEventListener {
         gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_SPECULAR, spec, 0);
         gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, pos, 0);
         gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, gAmb, 0);
-
-        gl.glShadeModel(GL2.GL_SMOOTH);
 
         fps.start();
     }
@@ -110,18 +120,31 @@ public class Main extends JFrame implements GLEventListener {
         GL4 gl4 = glAutoDrawable.getGL().getGL4();
         GL2 gl = glAutoDrawable.getGL().getGL2();
 
-        gl.glClear(GL2.GL_DEPTH_BUFFER_BIT | GL2.GL_COLOR_BUFFER_BIT);
+        gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
+
+        gl.glEnable(GL2.GL_LIGHTING);
+        gl.glEnable(GL2.GL_LIGHT0);
+        gl.glEnable(GL2.GL_DEPTH_TEST);
+        gl.glDepthFunc(GL2.GL_LESS);
+        gl.glDepthMask(true);
+        gl.glDepthRange(1.0f, 0.0f);
+        gl.glCullFace(GL2.GL_BACK);
+        gl.glEnable(GL2.GL_CULL_FACE);
+        gl.glEnable(GL2.GL_MULTISAMPLE);
+        gl.glShadeModel(GL2.GL_SMOOTH);
 
         gl.glColor3f(1.0f, 1.0f, 1.0f);
 
+        rotAmount += 0.25f;
+        if(rotAmount > 360) {
+            rotAmount = 0;
+        }
+
         //glut.glutSolidSphere(1, 20, 20);
-
-        gl.glRotatef(0.25f, 0.0f, 1.0f, 0.0f);
-
         gl.glPushMatrix();
-        gl.glTranslated(0, 0, translateAmount);
-        gl.glRotated(1.0, 0, 1, 0);
+        gl.glTranslated(0, 0, -3);
         gl.glScaled(0.5, 0.5, 0.5);
+
         arwing.draw(gl);
         gl.glPopMatrix();
 
