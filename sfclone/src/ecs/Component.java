@@ -5,7 +5,7 @@ package ecs;
  */
 public abstract class Component {
 
-    Entity parent;
+    public Entity parent;
 
     public Component() {
 

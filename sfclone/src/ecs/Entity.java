@@ -10,7 +10,7 @@ import java.util.LinkedList;
  */
 public abstract class Entity {
 
-    LinkedList<Component> components;
+    public LinkedList<Component> components;
     public float[] pos;
 
     GL2 gl;

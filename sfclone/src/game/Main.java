@@ -114,7 +114,7 @@ public class Main extends JFrame implements GLEventListener {
 
         glu.gluPerspective(0.1f, aspectRatio, 1.0f, 500.0f); // fov aspect zNear zFar
         gl.glHint(GL2.GL_PERSPECTIVE_CORRECTION_HINT, GL2.GL_NICEST);
-        glu.gluLookAt(0f, 0f, 250f, // eyePos
+        glu.gluLookAt(0f, 0f, 20f, // eyePos
                 0f, 0f, 0f,       // lookAtPos
                 0f, 1f, 0f);      // eyeUpPos
 
@@ -163,10 +163,10 @@ public class Main extends JFrame implements GLEventListener {
         gl.glPushMatrix();
 
         // debug stuff so I can tell what's going on :)
-        rotAmount += 0.25f;
-        if(rotAmount >= 360) {
-            rotAmount = 0;
-        }
+//        rotAmount += 0.25f;
+//        if(rotAmount >= 360) {
+//            rotAmount = 0;
+//        }
 
         gl.glRotated(rotAmount, 0, 1, 0);
 

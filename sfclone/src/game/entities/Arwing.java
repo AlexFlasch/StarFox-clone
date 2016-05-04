@@ -1,20 +1,22 @@
 package game.entities;
 
 import com.jogamp.opengl.GL2;
-import com.jogamp.opengl.util.awt.TextRenderer;
 import com.jogamp.opengl.util.gl2.GLUT;
+import ecs.Component;
+import ecs.Entity;
 import ecs.entities.Renderable;
+import game.components.Reticle;
 import game.utils.GLModel;
 import game.utils.ObjLoader;
 
-import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.LinkedList;
 
 /**
  * Created by alexa on 5/2/2016.
  */
-public class Arwing extends Renderable implements KeyListener {
+public class Arwing extends Entity implements KeyListener {
 
     GL2 gl;
     GLUT glut;
@@ -36,10 +38,13 @@ public class Arwing extends Renderable implements KeyListener {
     int lastDirection; // left = 1, right = 2, up = 3, down = 4 (gross, I know. Time constraints though. :( )
     int currentDirection; // same applies as above
 
+    long time;
+
     public Arwing(GL2 gl) {
         super(gl);
         this.gl = gl;
 
+        components = new LinkedList<>();
 
         model = ObjLoader.LoadModel("sfclone/res/Arwing/arwing.obj", "sfclone/res/Arwing/arwing.mtl", gl);
         System.out.println("Model dimensions (x,y,z): " + model.getXWidth() + " " + model.getYHeight() + " " + model.getZDepth());
@@ -56,15 +61,36 @@ public class Arwing extends Renderable implements KeyListener {
 
         dX = 0;
         dY = 0;
+
+        time = System.currentTimeMillis();
+
+        this.addComponent(new Reticle(gl));
     }
 
     @Override
     public void update() {
-        pos[0] += dX;
-        pos[1] += dY;
+        if(pos[0] + dX >= 3) {
+            pos[0] = 3;
+        }
+        if(pos[0] + dX <= -3) {
+            pos[0] = -3;
+        }
+        else {
+            pos[0] += dX;
+        }
+
+        if(pos[1] + dY >= 3) {
+            pos[1] = 3;
+        }
+        if(pos[1] + dY <= -3) {
+            pos[1] = -3;
+        }
+        else {
+            pos[1] += dY;
+        }
 
         // update all components
-        super.update();
+        super.components.forEach(Component::update);
     }
 
     @Override
@@ -74,9 +100,9 @@ public class Arwing extends Renderable implements KeyListener {
         gl.glPushMatrix();
 
         // make the ship's rear end face us
-        gl.glTranslatef(0.0f, 0.0f, pos[1]);
-        gl.glTranslatef(0.0f, 0.0f, 0.0f);
-        gl.glTranslatef(pos[0], 0.0f, 0.0f);
+        gl.glTranslatef(0.0f, pos[1], 0.0f);
+        gl.glTranslatef(pos[0], pos[1], pos[2]);
+
         gl.glRotated(180, 0, 1, 0);
 
         // undo banking from changing directions
@@ -116,13 +142,12 @@ public class Arwing extends Renderable implements KeyListener {
             currentDirection = 0;
         }*/
 
-        // render all components
-        // super.render();
-
         // move to 0,0,0 to apply correct transformations
         gl.glTranslatef(-pos[0], -pos[1], -pos[2]);
 
         model.draw(gl);
+
+        super.components.forEach(Component::render);
 
         gl.glPopMatrix();
     }
@@ -188,6 +213,7 @@ public class Arwing extends Renderable implements KeyListener {
 
     private void moveRight() {
         if(pos[0] >= 3) {
+            pos[0] = 3;
             dX = 0;
             boundariesHit = true;
         }
@@ -199,6 +225,7 @@ public class Arwing extends Renderable implements KeyListener {
 
     private void moveLeft() {
         if(pos[0] <= -3) {
+            pos[0] = -3;
             dX = 0;
             boundariesHit = true;
         }
@@ -210,6 +237,7 @@ public class Arwing extends Renderable implements KeyListener {
 
     private void moveUp() {
         if(pos[1] >= 3) {
+            pos[1] = 3;
             dY = 0;
             boundariesHit = true;
         }
@@ -221,6 +249,7 @@ public class Arwing extends Renderable implements KeyListener {
 
     private void moveDown() {
         if(pos[1] <= -3) {
+            pos[1] = -3;
             dY = 0;
             boundariesHit = true;
         }
@@ -231,7 +260,11 @@ public class Arwing extends Renderable implements KeyListener {
     }
 
     private void cancelMovement(int direction) {
-        dX = 0;
-        dY = 0;
+        if(direction == 1 || direction == 2) {
+            dX = 0;
+        }
+        if(direction == 3 || direction == 4) {
+            dY = 0;
+        }
     }
 }
