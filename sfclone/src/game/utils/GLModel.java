@@ -1,3 +1,5 @@
+package game.utils;
+
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GLCapabilities;
@@ -28,11 +30,11 @@ import java.util.StringTokenizer;
  * Modified by Alex Flasch to use JOGL
  */
 
-class GLModel{
+public class GLModel{
 
-    private ArrayList<float[]> vertSets;
-    private ArrayList<float[]> vertSetNorms;
-    private ArrayList<float[]> vertSetTextures;
+    private ArrayList<double[]> vertSets;
+    private ArrayList<double[]> vertSetNorms;
+    private ArrayList<double[]> vertSetTextures;
     private ArrayList<int[]> faces;
     private ArrayList<int[]> faceTextures;
     private ArrayList<int[]> faceNorms;
@@ -42,12 +44,12 @@ class GLModel{
     private MtlLoader materials;
     private ArrayList<Integer> objectLists;
     private int numPolys;
-    private float topPoint;
-    private float bottomPoint;
-    private float leftPoint;
-    private float rightPoint;
-    private float farPoint;
-    private float nearPoint;
+    private double topPoint;
+    private double bottomPoint;
+    private double leftPoint;
+    private double rightPoint;
+    private double farPoint;
+    private double nearPoint;
     private String mtlPath;
     private int numTextures;
 
@@ -118,11 +120,11 @@ class GLModel{
 
                     //LOADS VERTEX COORDINATES
                     if(newline.startsWith("v ")){
-                        float coords[] = new float[4];
+                        double coords[] = new double[4];
                         newline = newline.substring(2, newline.length());
                         StringTokenizer st = new StringTokenizer(newline, " ");
                         for(int i = 0; st.hasMoreTokens(); i++)
-                            coords[i] = Float.parseFloat(st.nextToken());
+                            coords[i] = Double.parseDouble(st.nextToken());
 
                         if(firstPass){
                             rightPoint = coords[0];
@@ -151,22 +153,22 @@ class GLModel{
 
                         //LOADS VERTEX TEXTURE COORDINATES
                         if (newline.startsWith("vt")) {
-                            float coords[] = new float[4];
+                            double coords[] = new double[4];
                             newline = newline.substring(3, newline.length());
                             StringTokenizer st = new StringTokenizer(newline, " ");
                             for (int i = 0; st.hasMoreTokens(); i++)
-                                coords[i] = Float.parseFloat(st.nextToken());
+                                coords[i] = Double.parseDouble(st.nextToken());
 
                             vertSetTextures.add(coords);
                         } else {
 
                             //LOADS VERTEX NORMALS COORDINATES
                             if (newline.startsWith("vn")) {
-                                float coords[] = new float[4];
+                                double coords[] = new double[4];
                                 newline = newline.substring(3, newline.length());
                                 StringTokenizer st = new StringTokenizer(newline, " ");
                                 for (int i = 0; st.hasMoreTokens(); i++)
-                                    coords[i] = Float.parseFloat(st.nextToken());
+                                    coords[i] = Double.parseDouble(st.nextToken());
 
                                 vertSetNorms.add(coords);
                             } else {
@@ -331,11 +333,11 @@ class GLModel{
     }
 
     private void centerIt(){
-        float xShift = (rightPoint - leftPoint) / 2.0F;
-        float yShift = (topPoint - bottomPoint) / 2.0F;
-        float zShift = (nearPoint - farPoint) / 2.0F;
+        double xShift = (rightPoint - leftPoint) / 2.0F;
+        double yShift = (topPoint - bottomPoint) / 2.0F;
+        double zShift = (nearPoint - farPoint) / 2.0F;
         for(int i = 0; i < vertSets.size(); i++){
-            float coords[] = new float[4];
+            double coords[] = new double[4];
             coords[0] = (vertSets.get(i))[0] - leftPoint - xShift;
             coords[1] = (vertSets.get(i))[1] - bottomPoint - yShift;
             coords[2] = (vertSets.get(i))[2] - farPoint - zShift;
@@ -344,15 +346,15 @@ class GLModel{
 
     }
 
-    float getXWidth(){
+    public double getXWidth(){
         return rightPoint - leftPoint;
     }
 
-    float getYHeight(){
+    public double getYHeight(){
         return topPoint - bottomPoint;
     }
 
-    float getZDepth(){
+    public double getZDepth(){
         return nearPoint - farPoint;
     }
 
@@ -427,22 +429,22 @@ class GLModel{
 
                 for (int w = 0; w < tempFaces.length; w++) {
                     if (tempFacesNorms[w] != 0) {
-                        float tempNormX = vertSetNorms.get(tempFacesNorms[w] - 1)[0];
-                        float tempNormY = vertSetNorms.get(tempFacesNorms[w] - 1)[1];
-                        float tempNormZ = vertSetNorms.get(tempFacesNorms[w] - 1)[2];
-                        gl.glNormal3f(tempNormX, tempNormY, tempNormZ);
+                        double tempNormX = vertSetNorms.get(tempFacesNorms[w] - 1)[0];
+                        double tempNormY = vertSetNorms.get(tempFacesNorms[w] - 1)[1];
+                        double tempNormZ = vertSetNorms.get(tempFacesNorms[w] - 1)[2];
+                        gl.glNormal3d(tempNormX, tempNormY, tempNormZ);
                     }
 
                     if (tempFacesTextures[w] != 0) {
-                        float tempTextureX = vertSetTextures.get(tempFacesTextures[w] - 1)[0];
-                        float tempTextureY = vertSetTextures.get(tempFacesTextures[w] - 1)[1];
-                        gl.glTexCoord2f(tempTextureX, tempTextureY);
+                        double tempTextureX = vertSetTextures.get(tempFacesTextures[w] - 1)[0];
+                        double tempTextureY = vertSetTextures.get(tempFacesTextures[w] - 1)[1];
+                        gl.glTexCoord2d(tempTextureX, tempTextureY);
                     }
 
-                    float tempX = vertSets.get(tempFaces[w] - 1)[0];
-                    float tempY = vertSets.get(tempFaces[w] - 1)[1];
-                    float tempZ = vertSets.get(tempFaces[w] - 1)[2];
-                    gl.glVertex3f(tempX,tempY,tempZ);
+                    double tempX = vertSets.get(tempFaces[w] - 1)[0];
+                    double tempY = vertSets.get(tempFaces[w] - 1)[1];
+                    double tempZ = vertSets.get(tempFaces[w] - 1)[2];
+                    gl.glVertex3d(tempX,tempY,tempZ);
                 }
 
 
@@ -513,7 +515,7 @@ class GLModel{
         }
     }
 
-    void draw(GL2 gl){
+    public void draw(GL2 gl){
         for(int i = 0; i < objectLists.size(); i++) {
             glTextures.get(i).enable(gl);
             gl.glCallList(objectLists.get(i));

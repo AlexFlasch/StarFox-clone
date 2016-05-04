@@ -1,3 +1,5 @@
+package game.utils;
+
 import java.io.*;
 
 import com.jogamp.opengl.GL2;
@@ -12,7 +14,7 @@ import com.jogamp.opengl.GL2;
  * Modified by Alex Flasch to use JOGL
  */
 
-// Uses the class GLModel.java from JautOGL to load and display obj files.
+// Uses the class game.utils.GLModel.java from JautOGL to load and display obj files.
 public class ObjLoader {
 	
 	/*
@@ -23,7 +25,7 @@ public class ObjLoader {
 			FileInputStream r_path1 = new FileInputStream(path1);
 			BufferedReader b_read1 = new BufferedReader(new InputStreamReader(
 					r_path1));
-			model1 = new GLModel.java(b_read1, true,
+			model1 = new game.utils.GLModel.java(b_read1, true,
 					"W:\\nauka\\msc\\gk\\asemalaituri\\spot.mtl", gl);
 			r_path1.close();
 			b_read1.close();
