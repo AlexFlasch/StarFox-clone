@@ -17,7 +17,7 @@ public class LightEmitter extends Component {
 
     GL2 gl;
 
-    public LightEmitter(GL2 gl, float[][] settings) {
+    public LightEmitter(GL2 gl, float[][] settings, float[] color) {
         super();
         this.gl = gl;
         pos = new float[3];

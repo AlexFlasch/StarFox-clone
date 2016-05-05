@@ -20,6 +20,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.StringTokenizer;
@@ -428,6 +429,18 @@ public class GLModel{
                 ////////////////////////////
 
                 for (int w = 0; w < tempFaces.length; w++) {
+                    // define material properties
+                    // oh my god this guy's atrocious code makes me write more atrocious code. vicious cycles...
+                    MtlLoader.mtl mat = (MtlLoader.mtl) materials.Materials.get(i);
+
+                    float[] matKa = mat.Ka;
+                    float[] matKd = mat.Kd;
+                    float[] matKs = mat.Ks;
+
+                    gl.glMaterialfv(GL2.GL_FRONT_AND_BACK, GL2.GL_AMBIENT, FloatBuffer.wrap(matKa));
+                    gl.glMaterialfv(GL2.GL_FRONT_AND_BACK, GL2.GL_DIFFUSE, FloatBuffer.wrap(matKd));
+                    gl.glMaterialfv(GL2.GL_FRONT_AND_BACK, GL2.GL_SPECULAR, FloatBuffer.wrap(matKs));
+
                     if (tempFacesNorms[w] != 0) {
                         double tempNormX = vertSetNorms.get(tempFacesNorms[w] - 1)[0];
                         double tempNormY = vertSetNorms.get(tempFacesNorms[w] - 1)[1];
@@ -526,7 +539,6 @@ public class GLModel{
                 glTextures.get(i - 1).disable(gl);
             }
         }
-        gl.glDisable(GL2.GL_COLOR_MATERIAL);
         if(materials.hasTextureMap) {
             gl.glDisable(GL2.GL_TEXTURE_2D);
         }

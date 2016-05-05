@@ -8,10 +8,12 @@ import com.jogamp.opengl.util.awt.TextRenderer;
 import com.jogamp.opengl.util.gl2.GLUT;
 import ecs.World;
 import game.entities.Arwing;
+import game.entities.Asteroid;
 import game.utils.GLModel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ConcurrentModificationException;
 
 /**
  * Created by alexa on 4/12/2016.
@@ -33,13 +35,15 @@ public class Main extends JFrame implements GLEventListener {
 
     float rotAmount = 0f;
 
+    long lastAsteroidSpawn;
+
     static JFrame panel;
     static JFrame debugPanel;
     static JLabel debugLabel;
 
     String debugString;
 
-    World world;
+    public static World world;
 
     public Main() {
         super("SpaceMammal 128");
@@ -93,26 +97,28 @@ public class Main extends JFrame implements GLEventListener {
         panel.addKeyListener(arwing);
         world.addEntity(arwing);
 
+        lastAsteroidSpawn = System.currentTimeMillis();
+
         gl.glMatrixMode(GL2.GL_PROJECTION);
 
         gl.glEnable(GL2.GL_LIGHTING);
         gl.glEnable(GL2.GL_LIGHT0);
         gl.glEnable(GL2.GL_NORMALIZE);
         gl.glEnable(GL2.GL_DEPTH_TEST);
-        gl.glDepthFunc(GL2.GL_LESS);
-//        gl.glDepthRange(0.0f, 1.0f);
-//        gl.glCullFace(GL2.GL_BACK);
+        gl.glDepthFunc(GL2.GL_LEQUAL);
+        gl.glDepthRange(1.0f, 0.0f);
         gl.glEnable(GL2.GL_CULL_FACE);
+        gl.glCullFace(GL2.GL_BACK);
         gl.glEnable(GL2.GL_MULTISAMPLE);
         gl.glShadeModel(GL2.GL_SMOOTH);
 
         gl.glClearDepth(1.0f);
 
-        gl.glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+        gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         gl.glLoadIdentity();
         gl.glOrtho(-100, 100, -100, 100, -100, 100);
 
-        glu.gluPerspective(0.1f, aspectRatio, 1.0f, 500.0f); // fov aspect zNear zFar
+        glu.gluPerspective(0.1f, aspectRatio, 1.0f, 270.0f); // fov aspect zNear zFar
         gl.glHint(GL2.GL_PERSPECTIVE_CORRECTION_HINT, GL2.GL_NICEST);
         glu.gluLookAt(0f, 0f, 20f, // eyePos
                 0f, 0f, 0f,       // lookAtPos
@@ -122,16 +128,16 @@ public class Main extends JFrame implements GLEventListener {
 
         gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
 
-        float gAmb[] = {1.0f, 1.0f, 1.0f, 1.0f};
-        float amb[] = {0.7f, 0.7f, 0.7f, 1.0f};
+        float gAmb[] = {0.5f, 0.5f, 0.5f, 1.0f};
+        float amb[] = {0.3f, 0.3f, 0.3f, 1.0f};
         float diff[] = {1.0f, 1.0f, 1.0f, 1.0f};
         float spec[] = {1.0f, 1.0f, 1.0f, 1.0f};
         float pos[] = {0.0f, 0.75f, -2.0f, 1.0f};
 
-        gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_AMBIENT, amb, 0);
+        /*gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_AMBIENT, amb, 0);
         gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, diff, 0);
         gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_SPECULAR, spec, 0);
-        gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, pos, 0);
+        gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, pos, 0);*/
         gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, gAmb, 0);
 
         fps.start();
@@ -168,10 +174,26 @@ public class Main extends JFrame implements GLEventListener {
 //            rotAmount = 0;
 //        }
 
-        gl.glRotated(rotAmount, 0, 1, 0);
+//        gl.glRotated(rotAmount, 0, 1, 0);
 
-        world.update();
-        world.render();
+        try {
+            world.update();
+            world.render();
+        }
+        catch(ConcurrentModificationException ignored) {
+
+        }
+
+        long currentTime = System.currentTimeMillis();
+        if(currentTime - lastAsteroidSpawn >= 4000) {
+            lastAsteroidSpawn = currentTime;
+            try{
+                world.addEntity(new Asteroid(gl));
+            }
+            catch(ConcurrentModificationException ignored) {
+
+            }
+        }
 
         gl.glPopMatrix();
 

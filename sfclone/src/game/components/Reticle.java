@@ -32,7 +32,7 @@ public class Reticle extends Component{
 
         gl.glPushMatrix();
 
-        gl.glTranslated(0, 0, -6);
+        gl.glTranslated(0, 0, 20);
 
         gl.glCallList(listId);
 
@@ -45,7 +45,7 @@ public class Reticle extends Component{
 
         gl.glBegin(GL2.GL_LINES);
 
-        gl.glColor3f(0.0f, 0.0f, 1.0f);
+        gl.glColor3f(0.317f, 0.96f, 0.564f);
         gl.glLineWidth(1.0f);
 
         // first square

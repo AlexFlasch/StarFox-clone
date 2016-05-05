@@ -5,6 +5,7 @@ import com.jogamp.opengl.util.gl2.GLUT;
 import ecs.Component;
 import ecs.Entity;
 import ecs.entities.Renderable;
+import game.Main;
 import game.components.Reticle;
 import game.utils.GLModel;
 import game.utils.ObjLoader;
@@ -12,6 +13,7 @@ import game.utils.ObjLoader;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.LinkedList;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created by alexa on 5/2/2016.
@@ -95,7 +97,8 @@ public class Arwing extends Entity implements KeyListener {
 
     @Override
     public void render() {
-        // render arwing position for debugging
+        // get a random value to use in the lights, make them appear to flicker
+        float flicker = (float) ThreadLocalRandom.current().nextInt(0, 3) / 10;
 
         gl.glPushMatrix();
 
@@ -142,12 +145,13 @@ public class Arwing extends Entity implements KeyListener {
             currentDirection = 0;
         }*/
 
+
         // move to 0,0,0 to apply correct transformations
         gl.glTranslatef(-pos[0], -pos[1], -pos[2]);
 
-        model.draw(gl);
-
         super.components.forEach(Component::render);
+
+        model.draw(gl);
 
         gl.glPopMatrix();
     }
@@ -208,6 +212,10 @@ public class Arwing extends Entity implements KeyListener {
                 lastDirection = 4;
                 currentDirection = 0;
                 break;
+
+            case KeyEvent.VK_SPACE:
+                shoot();
+                break;
         }
     }
 
@@ -266,5 +274,12 @@ public class Arwing extends Entity implements KeyListener {
         if(direction == 3 || direction == 4) {
             dY = 0;
         }
+    }
+
+    private void shoot() {
+        float[] modifiedPos = new float[] { pos[0], pos[1], pos[2]};
+        modifiedPos[1] /= ((float) this.model.getYHeight() / 2);
+
+        Main.world.addEntity(new Projectile(gl, modifiedPos, true));
     }
 }
