@@ -37,6 +37,8 @@ public class Reticle extends Component{
         gl.glCallList(listId);
 
         gl.glPopMatrix();
+
+        gl.glColor3f(1.0f, 1.0f, 1.0f);
     }
 
     private void createDisplayList() {

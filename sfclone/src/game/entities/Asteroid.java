@@ -8,8 +8,10 @@ import com.jogamp.opengl.util.gl2.GLUT;
 import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
+import ecs.Component;
 import ecs.Entity;
 import game.Main;
+import game.components.CollisionDetection;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +33,11 @@ public class Asteroid extends Entity {
     double[] pos;
     double dZ;
     double speed;
+    double scale;
+
+    double leftPoint, rightPoint, topPoint, bottomPoint, nearPoint, farPoint;
+
+    CollisionDetection cd;
 
     public Asteroid(GL2 gl) {
         super(gl);
@@ -39,8 +46,14 @@ public class Asteroid extends Entity {
         this.glu = new GLU();
         this.glut = new GLUT();
 
+        cd = new CollisionDetection();
+        this.addComponent(cd);
+        Main.world.asteroids.add(this);
+
         double x = ThreadLocalRandom.current().nextDouble(10);
         double y = ThreadLocalRandom.current().nextDouble(10);
+
+        scale = 0.25;
 
         // make sure x and y are relatively within bounds
         x -= 5;
@@ -65,6 +78,13 @@ public class Asteroid extends Entity {
         radius = ThreadLocalRandom.current().nextDouble(9);
         radius += 1; // make the min size 1
 
+        leftPoint = pos[0] - (radius * scale);
+        rightPoint = pos[0] + (radius * scale);
+        topPoint = pos[1] + (radius * scale);
+        bottomPoint = pos[1] - (radius * scale);
+        nearPoint = pos[2] + (radius * scale);
+        farPoint = pos[2] - (radius * scale);
+
         System.out.println("Asteroid created: (" + pos[0] + " " + pos[1] + " " + pos[2] + ")");
     }
 
@@ -79,6 +99,29 @@ public class Asteroid extends Entity {
 
             }
         }
+
+        leftPoint = pos[0] - (radius * scale);
+        rightPoint = pos[0] + (radius * scale);
+        topPoint = pos[1] + (radius * scale);
+        bottomPoint = pos[1] - (radius * scale);
+        nearPoint = pos[2] + (radius * scale);
+        farPoint = pos[2] - (radius * scale);
+
+        // check for collisions with projectiles or the player
+        for(Projectile p : Main.world.projectiles) {
+            if(p.cd.collides(cd)) {
+                Main.world.asteroids.remove(this);
+                Main.world.removeEntity(this);
+                Main.world.projectiles.remove(p);
+                Main.world.removeEntity(p);
+                Main.world.score += 100;
+            }
+            if(Main.world.arwing.cd.collides(cd)) {
+                Main.world.removeEntity(Main.world.arwing);
+            }
+        }
+
+        components.forEach(Component::update);
     }
 
     public void render() {
@@ -87,7 +130,7 @@ public class Asteroid extends Entity {
         gl.glColor3f(1.0f, 1.0f, 1.0f);
 
         gl.glTranslated(pos[0], pos[1], pos[2]);
-        gl.glScaled(0.25, 0.25, 0.25);
+        gl.glScaled(scale, scale, scale);
         gl.glRotated(90, 1, 0, 0);
 
         texture.enable(gl);
@@ -99,5 +142,18 @@ public class Asteroid extends Entity {
         gl.glTranslated(-pos[0], pos[1], pos[2]);
 
         gl.glPopMatrix();
+    }
+
+    @Override
+    public double[] getBoundingBox() {
+        return new double[]
+                {
+                        leftPoint,
+                        rightPoint,
+                        topPoint,
+                        bottomPoint,
+                        nearPoint,
+                        farPoint
+                };
     }
 }

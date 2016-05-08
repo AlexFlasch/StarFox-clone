@@ -35,7 +35,13 @@ public class Main extends JFrame implements GLEventListener {
 
     float rotAmount = 0f;
 
+    long startingTime;
     long lastAsteroidSpawn;
+    long lastScoreIncrement;
+
+    int asteroidsSpawned = 0;
+
+    TextRenderer textRenderer;
 
     static JFrame panel;
     static JFrame debugPanel;
@@ -81,7 +87,7 @@ public class Main extends JFrame implements GLEventListener {
         debugPanel.setSize(300, 300);
         debugPanel.setResizable(false);
         debugPanel.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        debugPanel.add(debugLabel);
+//        debugPanel.add(debugLabel);
         debugPanel.setVisible(true);
 
 //        panel.addKeyListener(controls);
@@ -97,7 +103,14 @@ public class Main extends JFrame implements GLEventListener {
         panel.addKeyListener(arwing);
         world.addEntity(arwing);
 
+        textRenderer = new TextRenderer(new Font("Verdana", Font.PLAIN, 12));
+        textRenderer.begin3DRendering();
+        textRenderer.setColor(Color.WHITE);
+        textRenderer.setSmoothing(true);
+
+        startingTime = System.currentTimeMillis();
         lastAsteroidSpawn = System.currentTimeMillis();
+        lastScoreIncrement = System.currentTimeMillis();
 
         gl.glMatrixMode(GL2.GL_PROJECTION);
 
@@ -128,16 +141,16 @@ public class Main extends JFrame implements GLEventListener {
 
         gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
 
-        float gAmb[] = {0.5f, 0.5f, 0.5f, 1.0f};
+        float gAmb[] = {0.7f, 0.7f, 0.7f, 1.0f};
         float amb[] = {0.3f, 0.3f, 0.3f, 1.0f};
         float diff[] = {1.0f, 1.0f, 1.0f, 1.0f};
         float spec[] = {1.0f, 1.0f, 1.0f, 1.0f};
         float pos[] = {0.0f, 0.75f, -2.0f, 1.0f};
 
-        /*gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_AMBIENT, amb, 0);
+        gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_AMBIENT, amb, 0);
         gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, diff, 0);
         gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_SPECULAR, spec, 0);
-        gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, pos, 0);*/
+        gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, pos, 0);
         gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, gAmb, 0);
 
         fps.start();
@@ -166,6 +179,20 @@ public class Main extends JFrame implements GLEventListener {
         arwing.draw(gl);
         gl.glPopMatrix();*/
 
+        long currentTime = System.currentTimeMillis();
+        if(currentTime - lastScoreIncrement >= 100) {
+            world.score++;
+            lastScoreIncrement = currentTime;
+        }
+
+        gl.glPushMatrix();
+
+//        textRenderer.draw3D("SCORE " + world.score, 0, windowHeight, 0, 2.0f);
+        gl.glWindowPos2d(50, windowHeight-100);
+        glut.glutBitmapString(GLUT.BITMAP_HELVETICA_18, "SCORE " + world.score);
+
+        gl.glPopMatrix();
+
         gl.glPushMatrix();
 
         // debug stuff so I can tell what's going on :)
@@ -184,9 +211,10 @@ public class Main extends JFrame implements GLEventListener {
 
         }
 
-        long currentTime = System.currentTimeMillis();
-        if(currentTime - lastAsteroidSpawn >= 4000) {
+
+        if(currentTime - lastAsteroidSpawn >= 4000 - (10 * asteroidsSpawned)) {
             lastAsteroidSpawn = currentTime;
+            asteroidsSpawned++;
             try{
                 world.addEntity(new Asteroid(gl));
             }

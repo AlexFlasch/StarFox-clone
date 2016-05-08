@@ -1,0 +1,20 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="sfclone:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/sfclone_jar</output-path>
+    <root id="archive" name="sfclone.jar">
+      <element id="module-output" name="sfclone" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/gluegen-rt-natives-linux-amd64.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/gluegen-rt-natives-linux-i586.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/gluegen-rt-natives-macosx-universal.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/gluegen-rt-natives-windows-amd64.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/gluegen-rt-natives-windows-i586.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/gluegen-rt.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/jogl-all-natives-linux-amd64.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/jogl-all-natives-linux-i586.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/jogl-all-natives-macosx-universal.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/jogl-all-natives-windows-amd64.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/jogl-all-natives-windows-i586.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/sfclone/lib/jogl_2_3_support/jogl-all.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

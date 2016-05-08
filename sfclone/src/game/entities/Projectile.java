@@ -1,9 +1,10 @@
 package game.entities;
 
 import com.jogamp.opengl.GL2;
+import ecs.Component;
 import ecs.Entity;
-import ecs.components.LightEmitter;
 import game.Main;
+import game.components.CollisionDetection;
 
 /**
  * Created by alexa on 5/4/2016.
@@ -13,8 +14,14 @@ public class Projectile extends Entity {
     float dZ;
     int listId;
 
+    public boolean isCollideable = true;
+
     float[] pos;
     boolean friendly;
+
+    CollisionDetection cd;
+
+    double leftPoint, rightPoint, upPoint, downPoint, nearPoint, farPoint;
 
     GL2 gl;
 
@@ -25,8 +32,19 @@ public class Projectile extends Entity {
         this.pos = new float[] { pos[0], pos[1], pos[2] };
         this.friendly = friendly;
 
+        cd = new CollisionDetection();
+        this.addComponent(cd);
+        Main.world.projectiles.add(this);
+
         dZ = 10.0f;
         listId = 0;
+
+        leftPoint = pos[0] - 1;
+        rightPoint = pos[0] + 1;
+        upPoint = pos[1] + 1;
+        downPoint = pos[1] - 1;
+        nearPoint = pos[2] + 2;
+        farPoint = pos[2] - 2;
 
         createDisplayList();
     }
@@ -35,9 +53,18 @@ public class Projectile extends Entity {
     public void update() {
         pos[2] -= dZ;
 
+        leftPoint = pos[0] - 1;
+        rightPoint = pos[0] + 1;
+        upPoint = pos[1] + 1;
+        downPoint = pos[1] - 1;
+        nearPoint = pos[2] + 2;
+        farPoint = pos[2] - 2;
+
         if(pos[2] >= 50) {
             Main.world.removeEntity(this);
         }
+
+        this.components.forEach(Component::update);
     }
 
     @Override
@@ -63,6 +90,21 @@ public class Projectile extends Entity {
         gl.glEnd();
 
         gl.glPopMatrix();
+
+        gl.glColor3f(1.0f, 1.0f, 1.0f);
+    }
+
+    @Override
+    public double[] getBoundingBox() {
+        return new double[]
+                {
+                        leftPoint,
+                        rightPoint,
+                        upPoint,
+                        downPoint,
+                        nearPoint,
+                        farPoint
+                };
     }
 
     private void createDisplayList() {

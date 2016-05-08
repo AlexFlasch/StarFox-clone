@@ -1,6 +1,7 @@
 package ecs;
 
 import com.jogamp.opengl.GL2;
+import game.entities.*;
 
 import java.util.LinkedList;
 
@@ -10,10 +11,16 @@ import java.util.LinkedList;
 public class World {
 
     public LinkedList<Entity> entities;
+    public LinkedList<Asteroid> asteroids;
+    public LinkedList<Projectile> projectiles;
+    public Arwing arwing;
+    public long score;
     GL2 gl;
 
     public World(GL2 gl) {
         entities = new LinkedList<>();
+        asteroids = new LinkedList<>();
+        projectiles = new LinkedList<>();
         this.gl = gl;
     }
 

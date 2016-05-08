@@ -45,12 +45,12 @@ public class GLModel{
     private MtlLoader materials;
     private ArrayList<Integer> objectLists;
     private int numPolys;
-    private double topPoint;
-    private double bottomPoint;
-    private double leftPoint;
-    private double rightPoint;
-    private double farPoint;
-    private double nearPoint;
+    public double topPoint;
+    public double bottomPoint;
+    public double leftPoint;
+    public double rightPoint;
+    public double farPoint;
+    public double nearPoint;
     private String mtlPath;
     private int numTextures;
 

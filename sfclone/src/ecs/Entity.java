@@ -44,4 +44,6 @@ public abstract class Entity {
         components.remove(c);
         c.parent = null;
     }
+
+    public abstract double[] getBoundingBox();
 }

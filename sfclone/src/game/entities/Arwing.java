@@ -4,8 +4,8 @@ import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.util.gl2.GLUT;
 import ecs.Component;
 import ecs.Entity;
-import ecs.entities.Renderable;
 import game.Main;
+import game.components.CollisionDetection;
 import game.components.Reticle;
 import game.utils.GLModel;
 import game.utils.ObjLoader;
@@ -28,6 +28,10 @@ public class Arwing extends Entity implements KeyListener {
     float shipBankXOffset;
     float shipBankZOffset;
 
+    CollisionDetection cd;
+
+    public boolean isCollideable = true;
+
     public boolean boundariesHit;
 
     public float[] pos;
@@ -47,6 +51,10 @@ public class Arwing extends Entity implements KeyListener {
         this.gl = gl;
 
         components = new LinkedList<>();
+
+        cd = new CollisionDetection();
+        this.addComponent(cd);
+        Main.world.arwing = this;
 
         model = ObjLoader.LoadModel("sfclone/res/Arwing/arwing.obj", "sfclone/res/Arwing/arwing.mtl", gl);
         System.out.println("Model dimensions (x,y,z): " + model.getXWidth() + " " + model.getYHeight() + " " + model.getZDepth());
@@ -154,6 +162,19 @@ public class Arwing extends Entity implements KeyListener {
         model.draw(gl);
 
         gl.glPopMatrix();
+    }
+
+    @Override
+    public double[] getBoundingBox() {
+        return new double[]
+                {
+                        model.leftPoint - pos[0],
+                        model.rightPoint + pos[0],
+                        model.topPoint + pos[1],
+                        model.bottomPoint - pos[1],
+                        model.nearPoint + pos[2],
+                        model.farPoint - pos[2]
+                };
     }
 
     @Override
@@ -278,7 +299,6 @@ public class Arwing extends Entity implements KeyListener {
 
     private void shoot() {
         float[] modifiedPos = new float[] { pos[0], pos[1], pos[2]};
-        modifiedPos[1] /= ((float) this.model.getYHeight() / 2);
 
         Main.world.addEntity(new Projectile(gl, modifiedPos, true));
     }
