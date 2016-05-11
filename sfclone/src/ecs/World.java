@@ -8,6 +8,7 @@ import java.util.LinkedList;
 /**
  * Created by alexa on 5/2/2016.
  */
+@SuppressWarnings("Convert2streamapi")
 public class World {
 
     public LinkedList<Entity> entities;
@@ -25,11 +26,15 @@ public class World {
     }
 
     public void update() {
-        entities.forEach(Entity::update);
+        for(Entity e : entities) {
+            e.update();
+        }
     }
 
     public void render() {
-        entities.forEach(Entity::render);
+        for(Entity e : entities) {
+            e.render();
+        }
     }
 
     public void addEntity(Entity e) {

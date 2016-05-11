@@ -121,7 +121,9 @@ public class Asteroid extends Entity {
             }
         }
 
-        components.forEach(Component::update);
+        for(Component c : components) {
+            c.update();
+        }
     }
 
     public void render() {

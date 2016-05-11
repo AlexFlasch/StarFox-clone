@@ -100,7 +100,9 @@ public class Arwing extends Entity implements KeyListener {
         }
 
         // update all components
-        super.components.forEach(Component::update);
+        for(Component c : super.components) {
+            c.update();
+        }
     }
 
     @Override
@@ -157,7 +159,9 @@ public class Arwing extends Entity implements KeyListener {
         // move to 0,0,0 to apply correct transformations
         gl.glTranslatef(-pos[0], -pos[1], -pos[2]);
 
-        super.components.forEach(Component::render);
+        for(Component c : super.components) {
+            c.render();
+        }
 
         model.draw(gl);
 

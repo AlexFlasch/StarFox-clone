@@ -64,7 +64,9 @@ public class Projectile extends Entity {
             Main.world.removeEntity(this);
         }
 
-        this.components.forEach(Component::update);
+        for(Component c : components) {
+            c.update();
+        }
     }
 
     @Override

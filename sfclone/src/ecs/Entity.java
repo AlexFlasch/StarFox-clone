@@ -8,6 +8,7 @@ import java.util.LinkedList;
 /**
  * Created by alexa on 4/30/2016.
  */
+@SuppressWarnings("Convert2streamapi")
 public abstract class Entity {
 
     public LinkedList<Component> components;
@@ -28,11 +29,15 @@ public abstract class Entity {
     }
 
     public void update() {
-        components.forEach(Component::update);
+        for(Component c : components) {
+            c.update();
+        }
     }
 
     public void render() {
-        components.forEach(Component::render);
+        for(Component c : components) {
+            c.render();
+        }
     }
 
     public void addComponent(Component c) {
